@@ -1,32 +1,56 @@
+# openspec/config.yaml
 schema: spec-driven
 
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
+context: |
+  Producto: Menu-now, carta digital con pedidos para cafeterías y bares de barrio.
+  Roles: dueño (configura carta y local), empleado (recibe y gestiona pedidos),
+  comensal (consulta la carta y pide).
+  Ningún rol tiene perfil técnico: lenguaje llano, flujos cortos, mobile-first.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Stack: React 19 + Tankstack Query + scss + TypeScript con Vite (SPA). Backend: Supabase (Postgres, Auth, RLS).
+  Testing: Vitest + React Testing Library (unit/integración), Playwright (e2e).
+  Despliegue: una instancia por local (frontend + proyecto Supabase propio).
+  No es multi-tenant: el código no modela varios locales en una misma base de datos.
+  Idiomas: UI en español (por defecto) e inglés.
+  Pagos: cualquier pasarela de pago está fuera de alcance. La app no procesa cobros.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  Reglas innegociables:
+  2. Simplicidad ante todo: es una aplicación para una cafetería de barrio,
+     no una plataforma. Ante dos soluciones, siempre la más simple.
+  3. Privacidad por diseño: el cliente final NUNCA se registra ni aporta
+     datos personales. Un pedido se asocia a una mesa, jamás a una persona.
+  4. La spec es la fuente de verdad: todo cambio de comportamiento
+     observable del sistema debe entrar como cambio de OpenSpec (propuesta
+     + deltas) o regularizarse como tal. Un comportamiento que
+     openspec/specs/ no describe es un defecto, aunque el código funcione.
+  5. Accesibilidad real: la carta la usan personas mayores en un móvil a
+     contraluz: tipografía legible, contraste alto, botones grandes. Los
+     alérgenos se muestran siempre de forma visible (obligación legal).
+
+# Reglas por artefacto: solo se inyectan al generar ese artefacto.
+rules:
+  proposal:
+    - Indicar qué roles afecta el cambio (dueño, empleado, comensal)
+    - Registra cada decisión de negocio en proposal.md con su fecha
+  specs:
+    - Redacta en español o ingles conservando la palabra normativa inglesa de cada
+      requisito (MUST/SHALL), p. ej. "El sistema MUST mostrar todos los
+      platos activos"
+    - Reutiliza los términos ya definidos en las specs vivas; no introduzcas
+      sinónimos nuevos para conceptos existentes
+    - Cada escenario se narra desde un rol concreto
+    - Sin decisiones de implementación; eso va en design
+    - El soporte es/en es transversal; no duplicar escenarios por idioma
+  design:
+    - Si el cambio toca el esquema de Supabase, incluir migración y políticas RLS
+    - Indicar si el cambio requiere acción manual en cada instancia desplegada
+    - Todo texto visible al usuario debe existir en es y en
+    - Ninguna dependencia nueva sin justificación escrita
+  tasks:
+    - Cada escenario de las specs se cubre con al menos un test, y la tarea indica cuál
+    - Playwright solo para flujos entre roles (p. ej. comensal pide → empleado recibe)
+
+operations:
+  apply:
+    guidance:
+      - Ejecutar los tests de los archivos afectados antes de la suite completa
