@@ -7,7 +7,7 @@ context: |
   comensal (consulta la carta y pide).
   Ningún rol tiene perfil técnico: lenguaje llano, flujos cortos, mobile-first.
 
-  Stack: React 19 + Tankstack Query + scss + TypeScript con Vite (SPA). Backend: Supabase (Postgres, Auth, RLS).
+  Stack: React 19 + TanStack Query + scss + TypeScript con Vite (SPA). Backend: Supabase (Postgres, Auth, RLS).
   Testing: Vitest + React Testing Library (unit/integración), Playwright (e2e).
   Despliegue: una instancia por local (frontend + proyecto Supabase propio).
   No es multi-tenant: el código no modela varios locales en una misma base de datos.
@@ -15,15 +15,15 @@ context: |
   Pagos: cualquier pasarela de pago está fuera de alcance. La app no procesa cobros.
 
   Reglas innegociables:
-  2. Simplicidad ante todo: es una aplicación para una cafetería de barrio,
+  1. Simplicidad ante todo: es una aplicación para una cafetería de barrio,
      no una plataforma. Ante dos soluciones, siempre la más simple.
-  3. Privacidad por diseño: el cliente final NUNCA se registra ni aporta
+  2. Privacidad por diseño: el cliente final NUNCA se registra ni aporta
      datos personales. Un pedido se asocia a una mesa, jamás a una persona.
-  4. La spec es la fuente de verdad: todo cambio de comportamiento
+  3. La spec es la fuente de verdad: todo cambio de comportamiento
      observable del sistema debe entrar como cambio de OpenSpec (propuesta
      + deltas) o regularizarse como tal. Un comportamiento que
      openspec/specs/ no describe es un defecto, aunque el código funcione.
-  5. Accesibilidad real: la carta la usan personas mayores en un móvil a
+  4. Accesibilidad real: la carta la usan personas mayores en un móvil a
      contraluz: tipografía legible, contraste alto, botones grandes. Los
      alérgenos se muestran siempre de forma visible (obligación legal).
 
