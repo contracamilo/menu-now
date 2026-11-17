@@ -1,58 +1,58 @@
 # Menu-now
 
-Carta digital con pedidos para cafeterías y bares de barrio.
+A digital menu with ordering for neighborhood cafés and bars.
 
-El comensal escanea el código de su mesa, consulta la carta y pide desde el móvil; el empleado recibe y gestiona los pedidos; el dueño configura la carta y el local. Sin registros de clientes, sin pagos, sin complicaciones.
+The diner scans their table's code, browses the menu and orders from their phone; staff receive and manage the orders; the owner manages the menu and venue settings. No diner accounts, no payments, no hassle.
 
 ## Roles
 
-| Rol | Qué hace |
+| Role | What they do |
 | --- | --- |
-| **Dueño** | Configura la carta y el local |
-| **Empleado** | Recibe y gestiona los pedidos |
-| **Comensal** | Consulta la carta y pide |
+| **Owner** | Manages the menu and venue settings |
+| **Staff** | Receives and manages orders |
+| **Diner** | Browses the menu and places orders |
 
-Ningún rol tiene perfil técnico: lenguaje llano, flujos cortos y diseño mobile-first.
+No role has a technical background: plain language, short flows and mobile-first design.
 
-## Principios
+## Principles
 
-- **Simplicidad ante todo.** Es una aplicación para una cafetería de barrio, no una plataforma. Entre dos soluciones, la más simple.
-- **Privacidad por diseño.** El comensal nunca se registra ni aporta datos personales. Un pedido se asocia a una mesa, jamás a una persona.
-- **La spec es la fuente de verdad.** Todo cambio de comportamiento observable entra como cambio de OpenSpec (propuesta + deltas). Un comportamiento que `openspec/specs/` no describe es un defecto, aunque el código funcione.
-- **Accesibilidad real.** Tipografía legible, contraste alto y botones grandes. Los alérgenos se muestran siempre de forma visible (obligación legal).
+- **Simplicity first.** This is an app for a neighborhood café, not a platform. Given two solutions, pick the simpler one.
+- **Privacy by design.** The diner never registers or provides personal data. An order is tied to a table, never to a person.
+- **The spec is the source of truth.** Every change to observable behavior goes through an OpenSpec change (proposal + deltas). Behavior not described in `openspec/specs/` is a defect, even if the code works.
+- **Real accessibility.** Readable typography, high contrast and large buttons. Allergens are always shown visibly (legal requirement).
 
 ## Stack
 
 - **Frontend:** React 19 + TypeScript + Vite (SPA), TanStack Query, SCSS
 - **Backend:** Supabase (Postgres, Auth, RLS)
-- **Testing:** Vitest + React Testing Library (unitarios e integración), Playwright (e2e entre roles)
-- **Idiomas:** español (por defecto) e inglés
+- **Testing:** Vitest + React Testing Library (unit and integration), Playwright (cross-role e2e)
+- **Languages:** Spanish (default) and English
 
-## Despliegue
+## Deployment
 
-Una instancia por local: un frontend y un proyecto de Supabase propio. El código **no** es multi-tenant y no modela varios locales en una misma base de datos.
+One instance per venue: a frontend and its own Supabase project. The code is **not** multi-tenant and does not model multiple venues in a single database.
 
-## Fuera de alcance
+## Out of scope
 
-- Pasarelas de pago: la app no procesa cobros.
-- Cuentas o datos personales de comensales.
+- Payment gateways: the app does not process payments.
+- Diner accounts or personal data.
 
-## Desarrollo guiado por specs (OpenSpec)
+## Spec-driven development (OpenSpec)
 
-El proyecto sigue un flujo spec-driven con [OpenSpec](https://github.com/Fission-AI/OpenSpec):
+The project follows a spec-driven workflow with [OpenSpec](https://github.com/Fission-AI/OpenSpec):
 
 ```
 openspec/
-├── config.yaml        # Contexto del proyecto y reglas por artefacto
-├── specs/             # Specs vivas: comportamiento actual del sistema
-└── changes/           # Cambios en curso (propuesta, design, deltas, tasks)
-    └── archive/       # Cambios ya aplicados y archivados
+├── config.yaml        # Project context and per-artifact rules
+├── specs/             # Living specs: the system's current behavior
+└── changes/           # Changes in progress (proposal, design, deltas, tasks)
+    └── archive/       # Applied and archived changes
 ```
 
-Flujo de un cambio:
+Lifecycle of a change:
 
-1. **Propuesta** (`proposal.md`): qué y por qué, roles afectados y decisiones de negocio fechadas.
-2. **Specs delta**: requisitos con palabra normativa (MUST/SHALL) y escenarios narrados desde un rol.
-3. **Design**: decisiones técnicas, migraciones y políticas RLS si toca el esquema, textos en es y en.
-4. **Tasks**: cada escenario cubierto por al menos un test.
-5. **Apply → Verify → Archive**: implementar, verificar contra la spec y fusionar los deltas en `openspec/specs/`.
+1. **Proposal** (`proposal.md`): what and why, affected roles and dated business decisions.
+2. **Spec deltas**: requirements with a normative keyword (MUST/SHALL) and scenarios written from a role's perspective.
+3. **Design**: technical decisions, migrations and RLS policies if the schema changes, user-facing text in es and en.
+4. **Tasks**: every scenario covered by at least one test.
+5. **Apply → Verify → Archive**: implement, verify against the spec and merge the deltas into `openspec/specs/`.
