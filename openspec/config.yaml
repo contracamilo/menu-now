@@ -2,55 +2,54 @@
 schema: spec-driven
 
 context: |
-  Producto: Menu-now, carta digital con pedidos para cafeterías y bares de barrio.
-  Roles: dueño (configura carta y local), empleado (recibe y gestiona pedidos),
-  comensal (consulta la carta y pide).
-  Ningún rol tiene perfil técnico: lenguaje llano, flujos cortos, mobile-first.
+  Product: Menu-now, a digital menu with ordering for neighborhood cafés and bars.
+  Roles: owner (manages the menu and venue settings), staff (receives and manages
+  orders), diner (browses the menu and places orders).
+  No role has a technical background: plain language, short flows, mobile-first.
 
-  Stack: React 19 + TanStack Query + scss + TypeScript con Vite (SPA). Backend: Supabase (Postgres, Auth, RLS).
-  Testing: Vitest + React Testing Library (unit/integración), Playwright (e2e).
-  Despliegue: una instancia por local (frontend + proyecto Supabase propio).
-  No es multi-tenant: el código no modela varios locales en una misma base de datos.
-  Idiomas: UI en español (por defecto) e inglés.
-  Pagos: cualquier pasarela de pago está fuera de alcance. La app no procesa cobros.
+  Stack: React 19 + TanStack Query + SCSS + TypeScript with Vite (SPA). Backend: Supabase (Postgres, Auth, RLS).
+  Testing: Vitest + React Testing Library (unit/integration), Playwright (e2e).
+  Deployment: one instance per venue (frontend + its own Supabase project).
+  Not multi-tenant: the code does not model multiple venues in a single database.
+  Languages: UI in Spanish (default) and English.
+  Payments: any payment gateway is out of scope. The app does not process payments.
 
-  Reglas innegociables:
-  1. Simplicidad ante todo: es una aplicación para una cafetería de barrio,
-     no una plataforma. Ante dos soluciones, siempre la más simple.
-  2. Privacidad por diseño: el cliente final NUNCA se registra ni aporta
-     datos personales. Un pedido se asocia a una mesa, jamás a una persona.
-  3. La spec es la fuente de verdad: todo cambio de comportamiento
-     observable del sistema debe entrar como cambio de OpenSpec (propuesta
-     + deltas) o regularizarse como tal. Un comportamiento que
-     openspec/specs/ no describe es un defecto, aunque el código funcione.
-  4. Accesibilidad real: la carta la usan personas mayores en un móvil a
-     contraluz: tipografía legible, contraste alto, botones grandes. Los
-     alérgenos se muestran siempre de forma visible (obligación legal).
+  Non-negotiable rules:
+  1. Simplicity first: this is an app for a neighborhood café, not a platform.
+     Given two solutions, always pick the simpler one.
+  2. Privacy by design: the diner NEVER registers or provides personal data.
+     An order is tied to a table, never to a person.
+  3. The spec is the source of truth: every change to the system's observable
+     behavior must go through an OpenSpec change (proposal + deltas) or be
+     regularized as one. Behavior not described in openspec/specs/ is a defect,
+     even if the code works.
+  4. Real accessibility: the menu is used by older people on a phone in bright
+     sunlight: readable typography, high contrast, large buttons. Allergens are
+     always shown visibly (legal requirement).
 
-# Reglas por artefacto: solo se inyectan al generar ese artefacto.
+# Per-artifact rules: injected only when generating that artifact.
 rules:
   proposal:
-    - Indicar qué roles afecta el cambio (dueño, empleado, comensal)
-    - Registra cada decisión de negocio en proposal.md con su fecha
+    - State which roles the change affects (owner, staff, diner)
+    - Record every business decision in proposal.md with its date
   specs:
-    - Redacta en español o ingles conservando la palabra normativa inglesa de cada
-      requisito (MUST/SHALL), p. ej. "El sistema MUST mostrar todos los
-      platos activos"
-    - Reutiliza los términos ya definidos en las specs vivas; no introduzcas
-      sinónimos nuevos para conceptos existentes
-    - Cada escenario se narra desde un rol concreto
-    - Sin decisiones de implementación; eso va en design
-    - El soporte es/en es transversal; no duplicar escenarios por idioma
+    - Write in Spanish or English, keeping each requirement's normative keyword
+      in English (MUST/SHALL), e.g. "The system MUST display all active dishes"
+    - Reuse terms already defined in the living specs; do not introduce new
+      synonyms for existing concepts
+    - Write each scenario from the perspective of a specific role
+    - No implementation decisions; those belong in design
+    - es/en support is cross-cutting; do not duplicate scenarios per language
   design:
-    - Si el cambio toca el esquema de Supabase, incluir migración y políticas RLS
-    - Indicar si el cambio requiere acción manual en cada instancia desplegada
-    - Todo texto visible al usuario debe existir en es y en
-    - Ninguna dependencia nueva sin justificación escrita
+    - If the change touches the Supabase schema, include the migration and RLS policies
+    - State whether the change requires manual action on each deployed instance
+    - All user-facing text must exist in both es and en
+    - No new dependency without written justification
   tasks:
-    - Cada escenario de las specs se cubre con al menos un test, y la tarea indica cuál
-    - Playwright solo para flujos entre roles (p. ej. comensal pide → empleado recibe)
+    - Every spec scenario is covered by at least one test, and the task names which one
+    - Use Playwright only for cross-role flows (e.g. diner orders → staff receives)
 
 operations:
   apply:
     guidance:
-      - Ejecutar los tests de los archivos afectados antes de la suite completa
+      - Run tests for the affected files before the full suite
