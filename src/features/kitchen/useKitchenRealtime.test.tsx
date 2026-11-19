@@ -129,6 +129,17 @@ describe('useKitchenRealtime', () => {
     expect(reads()).toBeGreaterThan(before);
   });
 
+  it('al volver la red del navegador relee el panel', async () => {
+    serveOrders();
+    renderWithProviders(<Harness />);
+    await flush();
+    await flush();
+    const before = reads();
+    act(() => void window.dispatchEvent(new Event('online')));
+    await flush();
+    expect(reads()).toBeGreaterThan(before);
+  });
+
   it('al desmontar elimina el canal', async () => {
     serveOrders();
     const view = renderWithProviders(<Harness />);

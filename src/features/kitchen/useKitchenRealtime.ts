@@ -79,7 +79,10 @@ export function useKitchenRealtime({ onInsert }: { onInsert?: (orderId: string) 
     const onVisible = () => {
       if (document.visibilityState === 'visible') refresh();
     };
-    const onOnline = () => setOnline(true);
+    const onOnline = () => {
+      setOnline(true);
+      refresh(); // ponerse al día aunque el canal no haya llegado a cerrarse
+    };
     const onOffline = () => setOnline(false);
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onOnline);

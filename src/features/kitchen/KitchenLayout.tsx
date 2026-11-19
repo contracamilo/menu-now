@@ -6,6 +6,7 @@ import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { VenueHeader } from '../venue/VenueHeader';
 import { signOutBackoffice, useBackofficeRole, useSession } from '../backoffice/session';
 import { useKitchenOrders, type KitchenOrdersData } from './kitchenApi';
+import { statusText } from './OrderCard';
 import { splitKitchenOrders } from './splitKitchenOrders';
 import { useAlertSound } from './useAlertSound';
 import { useKitchenRealtime, type KitchenRealtime } from './useKitchenRealtime';
@@ -43,18 +44,32 @@ export function KitchenLayout() {
 
   const { active, history } = useMemo(() => splitKitchenOrders(query.data?.orders ?? []), [query.data]);
 
-  // Región viva: anuncia cada pedido nuevo cuando ya se conoce su número y su mesa
+  // Región viva (spec «Accesibilidad del panel»): anuncia cada pedido nuevo cuando ya se conoce su
+  // número y su mesa, y cada cambio de estado, lo haga esta tablet u otro dispositivo
   const [announcement, setAnnouncement] = useState('');
   const announced = useRef(new Set<string>());
+  const lastStatus = useRef<Map<string, KitchenOrder['status']> | null>(null);
   useEffect(() => {
+    const orders = query.data?.orders;
+    if (!orders) return;
     const messages: string[] = [];
     for (const id of realtime.newIds) {
       if (announced.current.has(id)) continue;
-      const order = query.data?.orders.find((o) => o.id === id);
+      const order = orders.find((o) => o.id === id);
       if (!order) continue;
       announced.current.add(id);
       messages.push(t('kitchen.newOrder', { number: order.number, table: order.table_name }));
     }
+    const previous = lastStatus.current;
+    if (previous) {
+      for (const order of orders) {
+        const before = previous.get(order.id);
+        if (before && before !== order.status) {
+          messages.push(t('kitchen.statusChanged', { number: order.number, status: statusText(t, order.status) }));
+        }
+      }
+    }
+    lastStatus.current = new Map(orders.map((o) => [o.id, o.status]));
     if (messages.length > 0) setAnnouncement(messages.join(' '));
   }, [realtime.newIds, query.data, t]);
 

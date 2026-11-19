@@ -9,7 +9,9 @@
 begin;
 select plan(60);
 
--- Los números dependen del contador del día: se parte de cero (se deshace con el rollback final).
+-- Los números y la lista del día dependen de lo que ya haya en la base: se parte de cero
+-- (pedidos de desarrollo o de pruebas a mano; se deshace con el rollback final).
+delete from public.orders;
 delete from public.order_counters;
 
 -- Datos de prueba (como postgres, sin RLS) ----------------------------------

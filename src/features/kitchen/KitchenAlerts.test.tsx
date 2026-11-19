@@ -84,7 +84,7 @@ describe('Avisos del panel de cocina', () => {
     expect(await screen.findByRole('heading', { name: 'Nº 5' })).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: /^Nº/ }).map((h) => h.textContent)).toEqual(['Nº 4', 'Nº 5']);
     expect(within(card(5)).getByText('Nuevo')).toBeInTheDocument();
-    expect(card(5)).toHaveClass('order-card--new');
+    expect(card(5)).toHaveClass('kitchen-card--new');
     expect(alerts()).toBe(1);
   });
 
@@ -101,6 +101,16 @@ describe('Avisos del panel de cocina', () => {
     placeOrder(kitchenOrder({ id: 'o5', number: 5, table_name: 'Mesa 6' }));
     const announcement = await screen.findByText('Nuevo pedido nº 5 de Mesa 6.');
     expect(announcement).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('[kitchen-panel] «Accesibilidad del panel»: anuncia el cambio de estado hecho desde otra tablet', async () => {
+    await openPanel([kitchenOrder({ id: 'o4', number: 4 })]);
+    orders = [kitchenOrder({ id: 'o4', number: 4, status: 'in_preparation', preparing_at: '2026-11-19T13:06:00Z' })];
+    act(() => fakeSupabase.lastChannel('kitchen-orders').emitChange({ eventType: 'UPDATE', new: { id: 'o4' } }));
+    const announcement = await screen.findByText('Pedido nº 4: En preparación.');
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+    // Al abrir el panel no se anunciaba nada
+    expect(screen.queryByText(/^Pedido nº 4: Recibido/)).not.toBeInTheDocument();
   });
 
   it('la marca «Nuevo» desaparece al pulsar «Empezar»', async () => {

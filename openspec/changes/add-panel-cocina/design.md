@@ -129,6 +129,7 @@ language sql stable security invoker set search_path = '' as $$ ... $$;
   -- where service_day = public.current_service_day() order by created_at, items por position
 
 grant execute on function public.get_kitchen_orders() to authenticated;
+grant execute on function public.current_service_day() to authenticated;  -- la usa get_kitchen_orders (invoker)
 
 create policy "kitchen read orders" on public.orders
   for select to authenticated using (public.can_manage_orders());
@@ -139,7 +140,7 @@ create policy "kitchen read tables" on public.tables
 grant select on public.orders, public.order_items to authenticated;
 ```
 
-- **`security invoker`**: la función lee con los permisos de quien llama, así que la RLS de arriba es la única garantía; para `anon` o una cuenta sin rol devuelve una lista vacía (spec «Acceso al panel de cocina»). Las políticas de lectura son además necesarias para que Realtime entregue eventos (D5).
+- **`security invoker`**: la función lee con los permisos de quien llama, así que la RLS de arriba es la única garantía; para una cuenta sin rol devuelve una lista vacía y `anon` ni siquiera puede ejecutarla (`42501`, sin `grant` ni permiso de lectura sobre `orders`): en ambos casos se rechaza la lectura (spec «Acceso al panel de cocina»). Por ser `invoker`, `authenticated` necesita ejecutar `current_service_day()`, que antes era solo interna; devuelve una fecha y no expone datos. Las políticas de lectura son además necesarias para que Realtime entregue eventos (D5).
 - **Una RPC en lugar de un `select` con filtro `service_day=eq.<fecha>`**: el día de servicio lo decide el servidor en cada lectura, así que una tablet encendida de un día para otro pasa al día nuevo a las 05:00 sin lógica de fechas en el cliente; y devuelve mesa y líneas en una sola petición.
 - `server_now` permite al cliente corregir el desfase de reloj de la tablet al calcular el tiempo transcurrido (D8).
 - La política sobre `tables` deja al personal leer también el `token` de cada mesa (el secreto del QR). Se acepta: el personal está en el local delante de los QR impresos; restringirlo exigiría una vista o permisos por columna sin beneficio real.
@@ -161,14 +162,14 @@ alter publication supabase_realtime add table public.orders;
 
 - Estado de conexión = estado del canal (`subscribe((status) => …)`: `SUBSCRIBED` / `CHANNEL_ERROR` / `TIMED_OUT` / `CLOSED`) combinado con los eventos `online`/`offline` del navegador.
 - Si el canal no está `SUBSCRIBED` durante más de 5 s (para no parpadear al cargar o en reconexiones instantáneas), se muestra una banda fija arriba, con `role="alert"`: `kitchen.offline`. supabase-js reintenta la conexión solo.
-- Al volver a `SUBSCRIBED` tras un corte, y en cada `visibilitychange` a visible, se invalida la consulta: el panel se pone al día con lo ocurrido mientras tanto (spec «Aviso de conexión perdida») y la banda desaparece.
+- Al volver a `SUBSCRIBED` tras un corte, al recibir el mensaje `system` de Realtime que confirma que `postgres_changes` ya escucha la base de datos («Subscribed to PostgreSQL», que puede llegar después de `SUBSCRIBED`, p. ej. con Realtime recién arrancado), en cada `visibilitychange` a visible y con el evento `online` del navegador, se invalida la consulta: el panel se pone al día con lo ocurrido mientras tanto (spec «Aviso de conexión perdida») y la banda desaparece.
 - Si la relectura falla (sin red), se mantiene la última lista conocida con la banda visible; nunca se vacía la pantalla.
 
 ### D7. Aviso de pedido nuevo y pantalla encendida
 
 - **Sonido**: dos tonos cortos (~150 ms) generados con la **Web Audio API** (`OscillatorNode`), sin archivo de audio ni dependencia. Un `INSERT` suena una vez; varios en el mismo segundo, una sola vez.
 - **Política de reproducción automática**: el navegador mantiene el `AudioContext` suspendido hasta que alguien toca la página. El `KitchenLayout` muestra el botón `kitchen.enableSound` mientras el contexto esté suspendido; cualquier toque en el panel (incluido «Empezar») también lo reanuda. Una vez activo, el botón desaparece. No hay más ajustes de sonido (fuera de alcance).
-- **Resaltado visual**: la tarjeta del pedido nuevo lleva la etiqueta «Nuevo» y un borde destacado durante 2 minutos o hasta que se pulsa «Empezar». Se anuncia en una región viva `aria-live="polite"`: `kitchen.newOrder` (spec «Accesibilidad del panel»).
+- **Resaltado visual**: la tarjeta del pedido nuevo lleva la etiqueta «Nuevo» y un borde destacado durante 2 minutos o hasta que se pulsa «Empezar». Se anuncia en una región viva `aria-live="polite"` del `KitchenLayout`: `kitchen.newOrder`. La misma región anuncia cada cambio de estado, hecho desde esta tablet o desde otro dispositivo, comparando el estado de cada pedido entre lecturas: `kitchen.statusChanged` (spec «Accesibilidad del panel»).
 - **Pantalla encendida**: si el navegador lo admite, el panel pide `navigator.wakeLock.request('screen')` mientras está visible y lo renueva al volver a ser visible; si no, el README indica desactivar el bloqueo automático de la tablet. Son unas líneas sin dependencia y evitan que la tablet se apague y deje de avisar.
 
 ### D8. Interfaz del panel

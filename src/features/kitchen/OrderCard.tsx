@@ -15,22 +15,22 @@ function CardBody({ order, children, aside }: { order: KitchenOrder; children?: 
   const { t } = useI18n();
   return (
     <>
-      <header className="order-card__header">
-        <h2 className="order-card__number">{t('kitchen.orderNumber', { number: order.number })}</h2>
-        <p className="order-card__table">{t('kitchen.table', { table: order.table_name })}</p>
+      <header className="kitchen-card__header">
+        <h2 className="kitchen-card__number">{t('kitchen.orderNumber', { number: order.number })}</h2>
+        <p className="kitchen-card__table">{t('kitchen.table', { table: order.table_name })}</p>
         {aside}
       </header>
-      <p className={`order-card__status order-card__status--${order.status}`}>{statusText(t, order.status)}</p>
+      <p className={`kitchen-card__status kitchen-card__status--${order.status}`}>{statusText(t, order.status)}</p>
       {children}
-      <ul className="order-card__items">
+      <ul className="kitchen-card__items">
         {order.items.map((item) => (
-          <li key={item.position} className="order-card__item">
-            <span className="order-card__line">
+          <li key={item.position} className="kitchen-card__item">
+            <span className="kitchen-card__line">
               {item.quantity} × {item.dish_name}
               {item.size_label ? ` · ${item.size_label}` : ''}
             </span>
             {item.note && (
-              <span className="order-card__note">
+              <span className="kitchen-card__note">
                 <span aria-hidden="true">✎ </span>
                 {item.note}
               </span>
@@ -72,16 +72,16 @@ export function ActiveOrderCard({ order, now, clockOffset, isNew, onStart, onRes
   const busy = action.isPending;
 
   return (
-    <article className={`order-card${isNew ? ' order-card--new' : ''}`} aria-busy={busy || undefined}>
-      <CardBody order={order} aside={isNew && <p className="order-card__new">{t('kitchen.new')}</p>}>
-        <p className="order-card__elapsed">{elapsed}</p>
+    <article className={`kitchen-card${isNew ? ' kitchen-card--new' : ''}`} aria-busy={busy || undefined}>
+      <CardBody order={order} aside={isNew && <p className="kitchen-card__new">{t('kitchen.new')}</p>}>
+        <p className="kitchen-card__elapsed">{elapsed}</p>
       </CardBody>
       {failed && (
         <p role="alert" className="message message--error">
           {t('kitchen.actionError')}
         </p>
       )}
-      <div className="order-card__actions">
+      <div className="kitchen-card__actions">
         {order.status === 'received' && (
           <>
             <button
@@ -134,8 +134,8 @@ export function HistoryOrderCard({ order }: { order: KitchenOrder }) {
         ? t('kitchen.cancelledAt', { time: formatClock(order.cancelled_at, lang) })
         : null;
   return (
-    <article className="order-card order-card--history">
-      <CardBody order={order}>{closed && <p className="order-card__elapsed">{closed}</p>}</CardBody>
+    <article className="kitchen-card kitchen-card--history">
+      <CardBody order={order}>{closed && <p className="kitchen-card__elapsed">{closed}</p>}</CardBody>
     </article>
   );
 }

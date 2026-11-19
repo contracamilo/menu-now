@@ -88,7 +88,7 @@ $kitchen-action-height: 56px;
   }
 }
 
-.order-card {
+.kitchen-card {
   @include card;
   flex: 1;
   display: flex;
@@ -207,6 +207,25 @@ $kitchen-action-height: 56px;
   &--danger {
     color: $color-error;
     border-color: $color-error;
+  }
+}
+
+.kitchen-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  padding: $space-5;
+  color: $color-text;
+  background: $color-surface;
+  border: 0;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  &__title {
+    margin-top: 0;
+    font-size: $font-size-h2;
   }
 }
 

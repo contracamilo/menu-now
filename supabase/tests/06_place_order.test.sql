@@ -13,6 +13,7 @@ select plan(32);
 
 -- Los números dependen del contador del día: se parte de cero aunque la base tenga pedidos
 -- de desarrollo o de e2e (se deshace con el rollback final).
+delete from public.orders;
 delete from public.order_counters;
 
 -- Datos de prueba (como postgres) ----------------------------------------------------

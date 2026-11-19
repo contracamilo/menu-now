@@ -16,7 +16,6 @@ export function KitchenPage() {
   const { query, data, active, realtime } = useKitchen();
   const now = useNow(30_000);
   const [conflict, setConflict] = useState<string | null>(null);
-  const [status, setStatus] = useState('');
   const [cancelRequest, setCancelRequest] = useState<CancelRequest | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -34,8 +33,8 @@ export function KitchenPage() {
 
   function onResult(order: KitchenOrder, result: OrderChangeResult) {
     if (result.status === 'ok') {
+      // El cambio de estado lo anuncia la región viva del marco (KitchenLayout)
       setConflict(null);
-      setStatus(t('kitchen.statusChanged', { number: order.number, status: statusText(t, result.order.status) }));
     } else if (result.status === 'conflict') {
       setConflict(t('kitchen.conflict', { number: order.number, status: statusText(t, result.current_status) }));
     }
@@ -65,9 +64,6 @@ export function KitchenPage() {
           {conflict}
         </p>
       )}
-      <p className="visually-hidden" role="status">
-        {status}
-      </p>
       {active.length === 0 ? (
         <p className="kitchen__empty">{t('kitchen.empty')}</p>
       ) : (
@@ -88,10 +84,10 @@ export function KitchenPage() {
         </ol>
       )}
 
-      <dialog ref={dialog} className="size-picker kitchen-dialog" aria-labelledby="cancel-title" onClose={() => setCancelRequest(null)}>
+      <dialog ref={dialog} className="kitchen-dialog" aria-labelledby="cancel-title" onClose={() => setCancelRequest(null)}>
         {cancelRequest && (
           <>
-            <h2 id="cancel-title" className="size-picker__title">
+            <h2 id="cancel-title" className="kitchen-dialog__title">
               {t('kitchen.cancelConfirm', { number: cancelRequest.order.number, table: cancelRequest.order.table_name })}
             </h2>
             <div className="kitchen-dialog__actions">
