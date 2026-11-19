@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useT } from '../../i18n/useT';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { VenueHeader } from '../venue/VenueHeader';
+import { CategoryIndex } from './CategoryIndex';
 import { DishCard } from './DishCard';
 import { useMenu } from './useMenu';
 import { visibleCategories } from './visibleCategories';
@@ -55,17 +56,7 @@ export function MenuPage() {
           {t('menu.allergyNotice')}
         </p>
 
-        <nav className="menu-index" aria-label={t('menu.index')}>
-          <ul>
-            {categories.map((category) => (
-              <li key={category.id}>
-                <a className="tap-target menu-index__link" href={`#cat-${category.id}`}>
-                  {category.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <CategoryIndex categories={categories} />
 
         <p className="vat-note">{t('menu.vatIncluded')}</p>
 

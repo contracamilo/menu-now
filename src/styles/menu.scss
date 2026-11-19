@@ -18,15 +18,29 @@
 }
 
 .menu-index {
-  margin: 0 0 $space-3;
+  position: relative;
+  margin: 0 (-$space-4) $space-3; // a sangre: el carrusel llega a los bordes de la pantalla
 
-  ul {
+  // Una sola fila con desplazamiento lateral (design D6)
+  &__track {
     display: flex;
-    flex-wrap: wrap;
     gap: $space-2;
     margin: 0;
-    padding: 0;
+    padding: $space-1 $space-4;
     list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: $space-4;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    li {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+    }
   }
 
   &__link {
@@ -41,6 +55,46 @@
     &:active {
       background: $color-accent-soft;
     }
+  }
+
+  // Flecha + degradado en el borde tras el que quedan categorías ocultas
+  &__edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    width: 4.5rem;
+    pointer-events: none;
+
+    &--before {
+      left: 0;
+      justify-content: flex-start;
+      padding-left: $space-2;
+      background: linear-gradient(to left, rgba(242, 242, 244, 0), $color-background 55%);
+    }
+
+    &--after {
+      right: 0;
+      justify-content: flex-end;
+      padding-right: $space-2;
+      background: linear-gradient(to right, rgba(242, 242, 244, 0), $color-background 55%);
+    }
+  }
+
+  &__arrow {
+    pointer-events: auto;
+    padding: 0;
+    font: inherit;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: $color-on-accent;
+    background: $color-accent;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: $shadow-card;
+    cursor: pointer;
   }
 }
 
