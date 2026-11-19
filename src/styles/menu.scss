@@ -3,8 +3,21 @@
 
 // Carta del comensal: estilo suave, jerarquía clara, contraste ≥ 7:1 y objetivos de 44 px (design D10)
 
-.menu-page .venue-header .lang-switcher {
-  margin-left: auto;
+.menu-page {
+  padding-bottom: 6rem; // que el botón «Volver arriba» no tape el último plato
+
+  .venue-header .lang-switcher {
+    margin-left: auto;
+  }
+
+  h1:focus {
+    outline: none; // foco programático de «Volver arriba»; el foco con teclado sigue visible
+  }
+
+  h1:focus-visible {
+    outline: 3px solid $color-accent;
+    outline-offset: 2px;
+  }
 }
 
 .allergy-notice {
@@ -199,4 +212,22 @@
   color: $color-text;
   background: $color-chip-background;
   border-radius: 999px;
+}
+
+// Botón fijo «Volver arriba» (design D6)
+.back-to-top {
+  position: fixed;
+  right: max(#{$space-4}, env(safe-area-inset-right));
+  bottom: max(#{$space-4}, env(safe-area-inset-bottom));
+  z-index: 10;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  font: inherit;
+  font-weight: 700;
+  color: $color-on-accent;
+  background: $color-accent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
 }

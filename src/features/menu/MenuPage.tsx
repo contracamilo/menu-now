@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useT } from '../../i18n/useT';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { VenueHeader } from '../venue/VenueHeader';
+import { BackToTop } from './BackToTop';
 import { CategoryIndex } from './CategoryIndex';
 import { DishCard } from './DishCard';
 import { useMenu } from './useMenu';
@@ -80,6 +81,7 @@ export function MenuPage() {
         <LanguageSwitcher />
       </VenueHeader>
       {content}
+      <BackToTop />
     </main>
   );
 }

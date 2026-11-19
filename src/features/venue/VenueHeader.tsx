@@ -33,7 +33,10 @@ export function VenueHeader({ asHeading = true, children }: Props) {
         />
       )}
       <div className="venue-header__text">
-        <Title className="venue-header__name">{title}</Title>
+        {/* tabIndex -1: «Volver arriba» lleva aquí el foco */}
+        <Title className="venue-header__name" tabIndex={asHeading ? -1 : undefined}>
+          {title}
+        </Title>
         {subtitle && <p className="venue-header__subtitle">{subtitle}</p>}
       </div>
       {children}
