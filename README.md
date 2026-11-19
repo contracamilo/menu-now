@@ -32,6 +32,56 @@ No role has a technical background: plain language, short flows and mobile-first
 
 One instance per venue: a frontend and its own Supabase project. The code is **not** multi-tenant and does not model multiple venues in a single database.
 
+## Local development
+
+**Prerequisites:** Node.js 22+ and Docker (Docker Desktop or compatible) running.
+
+```bash
+npm install
+npx playwright install chromium   # browser for e2e tests and Lighthouse
+npm run db:start                  # local Supabase (Postgres, Auth, Storage, Mailpit)
+cp .env.example .env.local        # then paste API_URL and ANON_KEY from `npx supabase status`
+npm run db:reset                  # migrations + reference menu (supabase/seed.sql) + sample images
+npm run dev                       # http://127.0.0.1:5173
+```
+
+- **Diner menu:** <http://127.0.0.1:5173/>
+- **Admin:** <http://127.0.0.1:5173/admin>. Two development owner accounts come with the seed: `owner1@menu-now.test` and `owner2@menu-now.test`, password `menu-now-dev`.
+- **Emails (password reset):** local Supabase does not send real emails; open Mailpit (formerly Inbucket) at <http://127.0.0.1:54324> to read them. The link opens `/admin/reset-password`.
+- **Supabase Studio:** <http://127.0.0.1:54323>.
+
+### Tests
+
+| Command | What it checks | Needs |
+| --- | --- | --- |
+| `npm test` | Screens and pure functions (Vitest + React Testing Library, fake Supabase client) | — |
+| `npm run typecheck` | TypeScript, including that `en.ts` has every key of `es.ts` | — |
+| `npm run db:test` | Database rules, RLS and RPCs (pgTAP) | `db:start` |
+| `npm run test:int` | Auth (no sign-up, password reset email) and Storage limits | `db:start` |
+| `npm run e2e` | Owner manages the menu → diner sees it (Playwright) | `db:start` + `db:reset` |
+| `npm run perf` | Lighthouse CI: LCP < 2 s, `/` JS ≤ 150 KB gzip, accessibility = 1 | `db:start` + `db:reset` |
+
+## Setting up a venue instance (manual steps)
+
+Each venue gets its own Supabase project and its own frontend deployment. Repeat for every instance:
+
+1. **Apply the migrations:** `npx supabase link --project-ref <ref>` and `npx supabase db push`. This creates the tables, RLS policies, functions, the «Incluidos» category, the venue settings row and the `images` bucket.
+2. **Configure Supabase Auth** in the Dashboard:
+   - turn off *Allow new users to sign up*;
+   - minimum password length: **8**;
+   - *Site URL* = the instance's public URL, and add `<URL>/admin/reset-password` to *Redirect URLs*;
+   - set up **custom SMTP** (a transactional email provider) with a sender for the venue, and review the *Reset password* email template. Without SMTP the app works, but owners will not receive the reset link.
+3. **Create each owner account** (repeat per owner): Dashboard → Authentication → *Add user* (email + password, *Auto confirm*), then in the SQL Editor:
+   ```sql
+   insert into public.backoffice_users (user_id, role)
+   select id, 'owner' from auth.users where email = '<owner email>';
+   ```
+   To remove an owner, delete their user in Authentication (their row is removed in cascade).
+4. **Deploy the frontend** with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from the instance (`npm run build`, upload `dist/`). Configure the host's **SPA fallback**: every route serves `index.html`.
+5. **Hand over:** ask the owner to fill in the venue name and logo in *Mi local*, and print the table QR codes pointing to the instance's root URL (the same for every table).
+
+Create each Supabase project in the EU region closest to the venue.
+
 ## Out of scope
 
 - Payment gateways: the app does not process payments.
