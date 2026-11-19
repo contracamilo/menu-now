@@ -1,0 +1,238 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+// Carta del comensal: estilo suave, jerarquía clara, contraste ≥ 7:1 y objetivos de 44 px (design D10)
+
+.menu-page {
+  padding-bottom: 6rem; // que el botón «Volver arriba» no tape el último plato
+
+  .venue-header .lang-switcher {
+    margin-left: auto;
+  }
+
+  h1:focus {
+    outline: none; // foco programático de «Volver arriba»; el foco con teclado sigue visible
+  }
+
+  h1:focus-visible {
+    outline: 3px solid $color-accent;
+    outline-offset: 2px;
+  }
+}
+
+.allergy-notice {
+  margin: 0 0 $space-4;
+  padding: $space-3 $space-4;
+  font-weight: 600;
+  color: $color-text;
+  background: $color-notice-background;
+  border-left: 0.35rem solid $color-notice-accent;
+  border-radius: $radius;
+}
+
+.menu-index {
+  position: relative;
+  margin: 0 (-$space-4) $space-3; // a sangre: el carrusel llega a los bordes de la pantalla
+
+  // Una sola fila con desplazamiento lateral (design D6)
+  &__track {
+    display: flex;
+    gap: $space-2;
+    margin: 0;
+    padding: $space-1 $space-4;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: $space-4;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    li {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+    }
+  }
+
+  &__link {
+    padding: $space-1 $space-4;
+    font-weight: 600;
+    white-space: nowrap;
+    background: $color-surface;
+    border: $border-width solid $color-control-border;
+    border-radius: 999px;
+    text-decoration: none;
+
+    &:active {
+      background: $color-accent-soft;
+    }
+  }
+
+  // Flecha + degradado en el borde tras el que quedan categorías ocultas
+  &__edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    width: 4.5rem;
+    pointer-events: none;
+
+    &--before {
+      left: 0;
+      justify-content: flex-start;
+      padding-left: $space-2;
+      background: linear-gradient(to left, rgba(242, 242, 244, 0), $color-background 55%);
+    }
+
+    &--after {
+      right: 0;
+      justify-content: flex-end;
+      padding-right: $space-2;
+      background: linear-gradient(to right, rgba(242, 242, 244, 0), $color-background 55%);
+    }
+  }
+
+  &__arrow {
+    pointer-events: auto;
+    padding: 0;
+    font: inherit;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: $color-on-accent;
+    background: $color-accent;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: $shadow-card;
+    cursor: pointer;
+  }
+}
+
+.vat-note {
+  @include label;
+  margin: 0 0 $space-4;
+}
+
+.menu-category {
+  @include card;
+  margin-bottom: $space-4;
+  padding: $space-4;
+
+  &__title {
+    scroll-margin-top: $space-4;
+    margin-bottom: $space-1;
+  }
+}
+
+.dish {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-4 0;
+  border-bottom: 1px solid $color-divider;
+
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  &__name {
+    margin: 0;
+  }
+
+  &__prices {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-weight: 700;
+    color: $color-accent;
+  }
+
+  &__included {
+    margin: 0;
+    font-weight: 700;
+    color: $color-accent;
+  }
+
+  &__description {
+    margin: 0;
+    color: $color-text-secondary;
+  }
+
+  &__allergens-label {
+    @include label;
+    margin: 0;
+  }
+
+  &__no-allergens {
+    margin: 0;
+    font-size: 0.95rem;
+    color: $color-text-secondary;
+  }
+
+  // Con foto: miniatura a la derecha del texto (design D6); el texto sigue en el orden de lectura
+  &--with-photo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6rem;
+    align-items: start;
+    column-gap: $space-3;
+    row-gap: $space-2;
+
+    > * {
+      grid-column: 1;
+    }
+  }
+
+  &__photo {
+    grid-column: 2 !important;
+    grid-row: 1 / span 4;
+    width: 6rem;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: $radius;
+
+    &--pending {
+      display: block;
+      background: $color-chip-background;
+    }
+  }
+}
+
+.allergen-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin: $space-1 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.allergen-chip {
+  padding: 0.1rem $space-3;
+  font-size: 0.95rem;
+  color: $color-text;
+  background: $color-chip-background;
+  border-radius: 999px;
+}
+
+// Botón fijo «Volver arriba» (design D6)
+.back-to-top {
+  position: fixed;
+  right: max(#{$space-4}, env(safe-area-inset-right));
+  bottom: max(#{$space-4}, env(safe-area-inset-bottom));
+  z-index: 10;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  font: inherit;
+  font-weight: 700;
+  color: $color-on-accent;
+  background: $color-accent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}

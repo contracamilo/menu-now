@@ -1,0 +1,207 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: $font-size-base;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family;
+  line-height: $line-height;
+  color: $color-text;
+  background: $color-background;
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 $space-3;
+  letter-spacing: -0.01em;
+}
+h1 {
+  font-size: $font-size-h1;
+  font-weight: 800;
+}
+h2 {
+  font-size: $font-size-h2;
+  font-weight: 700;
+}
+h3 {
+  font-size: $font-size-h3;
+  font-weight: 650;
+}
+
+p {
+  margin: 0 0 $space-3;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: $color-accent;
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  @include focus-ring;
+}
+
+.tap-target {
+  @include tap-target;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page {
+  max-width: $content-max-width;
+  margin: 0 auto;
+  padding: $space-4;
+}
+
+.card {
+  @include card;
+  padding: $space-4;
+}
+
+.label {
+  @include label;
+}
+
+// Botones
+.button {
+  @include tap-target;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  font: inherit;
+  font-weight: 600;
+  color: $color-accent;
+  background: $color-surface;
+  border: $border-width solid $color-control-border;
+  border-radius: $radius;
+  cursor: pointer;
+  text-decoration: none;
+
+  &--primary {
+    color: $color-on-accent;
+    background: $color-accent;
+    border-color: $color-accent;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: $color-text-secondary;
+    border-style: dashed;
+  }
+}
+
+// Selector de idioma: control segmentado
+.lang-switcher {
+  display: inline-flex;
+  gap: $space-1;
+  padding: $space-1;
+  background: $color-surface;
+  border: $border-width solid $color-control-border;
+  border-radius: 999px;
+
+  &__button {
+    padding: $space-1 $space-3;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $color-accent;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      color: $color-on-accent;
+      background: $color-accent;
+    }
+  }
+}
+
+// Mensajes
+.message {
+  margin: $space-3 0;
+  font-weight: 600;
+
+  &:empty {
+    margin: 0;
+  }
+
+  &--error {
+    color: $color-error;
+  }
+  &--success {
+    color: $color-success;
+  }
+}
+
+.status {
+  @include card;
+  padding: $space-5 $space-4;
+  text-align: center;
+}
+
+// Cabecera del local: tarjeta propia, distinta del contenido
+.venue-header {
+  @include card;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-3;
+  margin-bottom: $space-4;
+  padding: $space-4;
+
+  &__logo {
+    width: 3.5rem;
+    height: 3.5rem;
+    object-fit: contain;
+    border-radius: $radius;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    min-width: 0;
+    flex: 1 1 10rem;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: $font-size-h1;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  &__subtitle {
+    @include label;
+    margin: 0;
+  }
+}

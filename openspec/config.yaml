@@ -11,7 +11,8 @@ context: |
   Testing: Vitest + React Testing Library (unit/integration), Playwright (e2e).
   Deployment: one instance per venue (frontend + its own Supabase project).
   Not multi-tenant: the code does not model multiple venues in a single database.
-  Languages: UI in Spanish (default) and English.
+  Languages: UI in Spanish and English. The diner menu defaults to English;
+  owner and staff screens default to Spanish.
   Payments: any payment gateway is out of scope. The app does not process payments.
 
   Non-negotiable rules:
