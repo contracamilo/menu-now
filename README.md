@@ -26,7 +26,7 @@ No role has a technical background: plain language, short flows and mobile-first
 - **Frontend:** React 19 + TypeScript + Vite (SPA), TanStack Query, SCSS
 - **Backend:** Supabase (Postgres, Auth, RLS)
 - **Testing:** Vitest + React Testing Library (unit and integration), Playwright (cross-role e2e)
-- **Languages:** Spanish (default) and English
+- **Languages:** Spanish and English (the diner menu defaults to English; owner and staff screens default to Spanish)
 
 ## Deployment
 
