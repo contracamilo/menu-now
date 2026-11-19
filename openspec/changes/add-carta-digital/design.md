@@ -1,0 +1,326 @@
+# Design: add-carta-digital
+
+## Context
+
+- Motivación y decisiones de negocio: ver `proposal.md`. Comportamiento exigido: `specs/menu`, `specs/catalog-management`, `specs/backoffice-access`.
+- **El repositorio no tiene código todavía** (solo `openspec/`, `README.md`, `.gitignore`). Este cambio arranca la SPA y el proyecto Supabase; las decisiones de estructura que se tomen aquí serán la base del resto de cambios.
+- Stack fijado por el proyecto: React 19 + TypeScript + Vite (SPA), TanStack Query, SCSS; Supabase (Postgres, Auth, RLS, Storage); Vitest + React Testing Library; Playwright solo para flujos entre roles.
+- Una instancia por local: una única carta por base de datos, sin columna de local en ninguna tabla.
+
+## Goals / Non-Goals
+
+**Goals:**
+- Una carta del comensal ligera, separada en su propio bundle de la administración, que cumpla el presupuesto de < 2 s en las condiciones de referencia definidas abajo.
+- Que las reglas de negocio críticas (declaración de alérgenos, no borrado, solo el dueño escribe, platos archivados invisibles para el público) se garanticen **en la base de datos**, no solo en la interfaz.
+- Una administración móvil sin gestos complejos (sin arrastrar y soltar).
+
+**Non-Goals:**
+- Tiempo real (la carta se actualiza al abrirla o recargarla; ver spec).
+- Roles de personal: solo se deja preparada la tabla de usuarios de la zona privada con el rol `owner`.
+- Recuperación de contraseña desde la app (el dueño la restablece desde Supabase; ver Open Questions).
+- PWA / funcionamiento sin conexión.
+
+## Decisions
+
+### D1. Estructura de la SPA y rutas
+
+```
+src/
+  main.tsx, App.tsx           # QueryClient, I18nProvider, router
+  i18n/{es,en}.ts, I18nProvider.tsx, useT.ts
+  lib/{supabase.ts, money.ts, allergens.ts}
+  styles/{tokens.scss, mixins.scss, global.scss}
+  features/menu/              # carta del comensal (bundle inicial)
+  features/backoffice/        # login, guardia de sesión (lazy)
+  features/catalog/           # administración del catálogo (lazy)
+supabase/
+  config.toml, migrations/, tests/ (pgTAP), seed.sql
+```
+
+| Ruta | Pantalla | Acceso |
+| --- | --- | --- |
+| `/` | Carta | Público |
+| `/admin/login` | Inicio de sesión | Público |
+| `/admin` | Catálogo: categorías y sus platos (activos / archivados) | Dueño |
+| `/admin/categories/new`, `/admin/categories/:id` | Formulario de categoría | Dueño |
+| `/admin/dishes/new?category=:id`, `/admin/dishes/:id` | Formulario de plato | Dueño |
+
+Todo `/admin/*` se carga con `React.lazy` para que la carta no descargue código de administración.
+
+**Router: `react-router` (nueva dependencia, justificada).** La administración necesita enlaces profundos, botón «atrás» del móvil coherente y redirección tras el login a la pantalla que se intentaba abrir (spec `backoffice-access`). Alternativas: (a) router casero sobre `history.pushState` — reimplementa scroll, back/forward y parámetros, más código propio que mantener; (b) TanStack Router — más potente pero más pesado y con más conceptos de los que necesita una app de 6 rutas. Se usa React Router en modo declarativo (`BrowserRouter` + `Routes`), lo mínimo.
+
+### D2. Modelo de datos (migración `supabase/migrations/20261117000000_carta_digital.sql`)
+
+```sql
+-- Alérgenos del Reglamento (UE) 1169/2011, Anexo II
+create type public.allergen as enum (
+  'gluten','crustaceans','eggs','fish','peanuts','soy','milk',
+  'tree_nuts','celery','mustard','sesame','sulphites','lupin','molluscs'
+);
+
+-- Usuarios de la zona privada (hoy solo el dueño; el personal llegará después)
+create table public.backoffice_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  role    text not null check (role in ('owner')),
+  created_at timestamptz not null default now()
+);
+
+create table public.categories (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null check (char_length(btrim(name)) between 1 and 40),
+  position    integer not null,
+  archived_at timestamptz,
+  created_at  timestamptz not null default now()
+);
+
+create table public.dishes (
+  id           uuid primary key default gen_random_uuid(),
+  category_id  uuid not null references public.categories(id) on delete restrict,
+  name         text not null check (char_length(btrim(name)) between 1 and 80),
+  description  text not null check (char_length(btrim(description)) between 1 and 160),
+  price_cents  integer not null check (price_cents > 0),
+  photo_path   text,
+  allergens    public.allergen[] not null default '{}',
+  no_allergens boolean not null default false,
+  position     integer not null,
+  archived_at  timestamptz,
+  created_at   timestamptz not null default now(),
+  -- Exactamente una declaración: lista no vacía XOR «sin alérgenos»
+  constraint dishes_allergen_declaration check (
+    (no_allergens and cardinality(allergens) = 0)
+    or (not no_allergens and cardinality(allergens) > 0)
+  )
+);
+create index dishes_category_position_idx on public.dishes (category_id, position);
+create index categories_position_idx on public.categories (position);
+```
+
+- **Precio en céntimos enteros** (`price_cents`): evita errores de coma flotante; «> 0 con como máximo dos decimales» queda garantizado por el tipo entero.
+- **Archivado = `archived_at` no nulo.** No hay borrado (D3). La fecha sirve además para mostrar al dueño cuándo se archivó.
+- **Posición:** entero por ámbito (categorías globales; platos por categoría). Un trigger `before insert` asigna `max(position)+1` si llega nulo, y un trigger `before update of category_id` coloca el plato al final de la nueva categoría (spec: «queda al final de su categoría»). Las posiciones pueden tener huecos; solo importa el orden relativo.
+- Límites de longitud (40 / 80 / 160 caracteres): decisión técnica para que la carta se lea bien en el móvil; la interfaz muestra el contador.
+
+### D3. RLS y permisos
+
+```sql
+create function public.is_owner() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.backoffice_users
+                 where user_id = auth.uid() and role = 'owner');
+$$;
+
+alter table public.backoffice_users enable row level security;
+alter table public.categories       enable row level security;
+alter table public.dishes           enable row level security;
+
+-- Cada usuario autenticado puede leer solo su propia fila (para saber si es dueño)
+create policy "self read" on public.backoffice_users
+  for select to authenticated using (user_id = auth.uid());
+
+-- Lectura pública: solo lo visible en la carta
+create policy "public read active categories" on public.categories
+  for select to anon, authenticated using (archived_at is null);
+create policy "public read active dishes" on public.dishes
+  for select to anon, authenticated using (
+    archived_at is null and exists (
+      select 1 from public.categories c
+      where c.id = category_id and c.archived_at is null));
+
+-- El dueño lee todo (incluido lo archivado) y escribe
+create policy "owner read categories" on public.categories
+  for select to authenticated using (public.is_owner());
+create policy "owner insert categories" on public.categories
+  for insert to authenticated with check (public.is_owner());
+create policy "owner update categories" on public.categories
+  for update to authenticated using (public.is_owner()) with check (public.is_owner());
+-- (mismas tres políticas para public.dishes)
+
+-- Sin políticas DELETE: nadie puede borrar. Además, por defensa en profundidad:
+revoke delete on public.categories, public.dishes from anon, authenticated;
+revoke insert, update on public.categories, public.dishes from anon;
+```
+
+- Las políticas permisivas se combinan con OR: el dueño ve también lo archivado; `anon` solo lo activo. **La consulta de la carta filtra igualmente `archived_at is null`** en categorías y platos, para que el dueño con sesión abierta vea en `/` exactamente lo mismo que un comensal.
+- `backoffice_users` no tiene políticas de escritura: el alta del dueño se hace con el rol de servicio (acción manual, D9).
+
+### D4. Reordenación con botones «subir / bajar» y RPC atómica
+
+```sql
+create function public.move_dish(p_id uuid, p_direction integer)  -- -1 sube, +1 baja
+returns void language plpgsql security invoker set search_path = '' as $$ ... $$;
+create function public.move_category(p_id uuid, p_direction integer)
+returns void language plpgsql security invoker set search_path = '' as $$ ... $$;
+```
+
+Cada función busca el vecino **activo** más cercano en la dirección indicada (mismo `category_id` en platos) e intercambia ambas `position` en una sola transacción; si no hay vecino, no hace nada. Al ser `security invoker`, las políticas RLS de `update` siguen aplicando: sin sesión de dueño la llamada no modifica nada.
+
+Alternativas: arrastrar y soltar (requiere librería, difícil con lector de pantalla y con el pulgar; viola la regla 1) o enviar la lista completa reordenada (más datos y riesgo de pisar cambios). Los botones de 44×44 px son accesibles y suficientes para cartas de decenas de platos.
+
+### D5. Fotos: Supabase Storage + redimensionado en el navegador
+
+- Bucket público `dish-photos` creado en la migración: `public = true`, `file_size_limit = 5242880` (5 MB), `allowed_mime_types = {image/jpeg}`. Políticas de `storage.objects`: lectura pública; `insert`/`update`/`delete` solo si `public.is_owner()` y `bucket_id = 'dish-photos'`.
+- Flujo en el formulario del plato:
+  1. El dueño elige archivo. Se valida **el archivo original**: tipo `image/jpeg|png|webp` y tamaño ≤ 5 MB. Si falla, se muestra el error y no se toca el resto del formulario (spec «Foto del plato»).
+  2. Se redimensiona con `createImageBitmap` + `<canvas>` a un máximo de 960 px en el lado mayor y se codifica como JPEG calidad 0,8 (≈ 60–150 KB). JPEG porque `canvas.toBlob('image/webp')` no está garantizado en todos los Safari; no hace falta ninguna dependencia.
+  3. Al guardar se sube a `dishes/<dish_id>/<uuid>.jpg` con `cacheControl: '31536000'` (nombre nuevo en cada sustitución → caché inmutable) y después se actualiza `photo_path`. Al sustituir o quitar, se borra el objeto anterior (best effort: si falla, queda un huérfano inofensivo).
+- El límite del bucket es la barrera en servidor; como el archivo subido siempre es el redimensionado, nunca debería alcanzarse en uso normal.
+- Alternativa descartada: transformaciones de imagen de Supabase (plan de pago, y una pieza más por instancia).
+
+### D6. Carga de la carta
+
+- Una sola petición vía `supabase-js` (PostgREST con recursos embebidos):
+  `categories?select=id,name,position,dishes(id,name,description,price_cents,photo_path,allergens,no_allergens,position)&archived_at=is.null&dishes.archived_at=is.null&order=position&dishes.order=position`.
+- El filtrado de categorías sin platos activos se hace en el cliente (función pura `visibleCategories`, probada con tests unitarios). Si no queda ninguna categoría → estado «carta no disponible». Si la petición falla → estado de error con «Reintentar» (`refetch`).
+- TanStack Query: `staleTime` 60 s, `refetchOnWindowFocus: true`, `retry: 1` (para mostrar el error pronto). La consulta se lanza al cargar el módulo de la carta (prefetch en `main.tsx`) para no esperar al primer render.
+- `<link rel="preconnect">` al dominio de Supabase en `index.html` (la URL se inyecta en build con `%VITE_SUPABASE_URL%`).
+- Fotos: `<img>` con `width`/`height` fijos (relación 4:3, evita saltos de diseño), `loading="lazy"` y `decoding="async"`, salvo las dos primeras del listado que van `loading="eager"`. Un plato sin foto no reserva hueco (spec «plato sin foto»).
+
+### D7. Condiciones de medición del rendimiento (requisito «Rendimiento de la carta»)
+
+| Parámetro | Valor |
+| --- | --- |
+| Herramienta | Lighthouse CI (`@lhci/cli`), 3 ejecuciones, se toma la mediana |
+| Dispositivo | Perfil móvil por defecto de Lighthouse (gama media, pantalla 412×823, CPU 4× más lenta) |
+| Red | Throttling simulado por defecto de Lighthouse: RTT 150 ms, 1,6 Mbps bajada, 750 Kbps subida (perfil «4G lento»; más exigente que un 4G típico, a propósito) |
+| Caché | Fría (primera visita) |
+| Build | Producción (`vite build` + `vite preview`) contra Supabase local |
+| Carta de referencia | `supabase/seed.sql`: 8 categorías, 60 platos activos (40 con foto ya redimensionada), 10 platos archivados |
+| Métrica y umbral | **Largest Contentful Paint < 2 000 ms** |
+| Presupuesto auxiliar | JS inicial de la ruta `/` ≤ 150 KB gzip (aserción `resource-summary:script:size` de LHCI) |
+
+«Contenido principal visible» se mide como LCP; para que el LCP corresponda a contenido real de la carta, el estado de carga es un indicador pequeño (no un esqueleto a pantalla completa).
+
+### D8. Internacionalización sin librería
+
+- Diccionarios tipados `src/i18n/es.ts` (fuente de verdad) y `src/i18n/en.ts` (`satisfies Messages`, de modo que TypeScript falla si falta una clave en inglés). Hook `useT()` y `I18nProvider` en React context; interpolación simple `{name}`.
+- Idioma por defecto: `es`. La elección se guarda en `localStorage` (`menu-now.lang`) — no es un dato personal ni identifica al comensal — y se refleja en `<html lang>`.
+- Precios con `Intl.NumberFormat` y `currency: 'EUR'`: `es-ES` → «2,50 €», `en-IE` → «€2.50». El dueño introduce el precio aceptando coma o punto decimal; `parsePriceToCents` es una función pura con tests.
+- Alternativa descartada: `react-i18next`/`i18next` (≈ 15 KB gzip y configuración) para ~70 cadenas y dos idiomas, contra la regla 1 y el presupuesto de D7.
+
+**Textos de interfaz (es / en).** Lista inicial; cualquier texto nuevo durante la implementación se añade a ambos diccionarios.
+
+| Clave | es | en |
+| --- | --- | --- |
+| `menu.title` | Carta | Menu |
+| `menu.empty` | La carta todavía no está disponible. Pregunta al personal. | The menu isn't available yet. Please ask the staff. |
+| `menu.error` | No hemos podido cargar la carta. | We couldn't load the menu. |
+| `menu.retry` | Reintentar | Try again |
+| `menu.loading` | Cargando la carta… | Loading the menu… |
+| `menu.allergens` | Alérgenos | Allergens |
+| `menu.noAllergens` | Sin alérgenos | No allergens |
+| `menu.vatIncluded` | Precios con IVA incluido | Prices include VAT |
+| `lang.label` | Idioma | Language |
+| `lang.es` / `lang.en` | Español / English | Español / English |
+| `allergen.gluten` | Gluten | Gluten |
+| `allergen.crustaceans` | Crustáceos | Crustaceans |
+| `allergen.eggs` | Huevos | Eggs |
+| `allergen.fish` | Pescado | Fish |
+| `allergen.peanuts` | Cacahuetes | Peanuts |
+| `allergen.soy` | Soja | Soy |
+| `allergen.milk` | Leche | Milk |
+| `allergen.tree_nuts` | Frutos de cáscara | Tree nuts |
+| `allergen.celery` | Apio | Celery |
+| `allergen.mustard` | Mostaza | Mustard |
+| `allergen.sesame` | Sésamo | Sesame |
+| `allergen.sulphites` | Sulfitos | Sulphites |
+| `allergen.lupin` | Altramuces | Lupin |
+| `allergen.molluscs` | Moluscos | Molluscs |
+| `auth.title` | Acceso del dueño | Owner sign-in |
+| `auth.email` / `auth.password` | Correo electrónico / Contraseña | Email / Password |
+| `auth.submit` | Entrar | Sign in |
+| `auth.invalid` | Correo o contraseña incorrectos. | Incorrect email or password. |
+| `auth.notOwner` | Esta cuenta no tiene acceso a la administración. | This account can't access the admin area. |
+| `auth.signOut` | Cerrar sesión | Sign out |
+| `admin.title` | Mi carta | My menu |
+| `admin.viewMenu` | Ver la carta | View menu |
+| `admin.newCategory` / `admin.newDish` | Nueva categoría / Nuevo plato | New category / New dish |
+| `admin.edit` | Editar | Edit |
+| `admin.moveUp` / `admin.moveDown` | Subir {name} / Bajar {name} | Move {name} up / Move {name} down |
+| `admin.archive` / `admin.reactivate` | Archivar / Reactivar | Archive / Restore |
+| `admin.archived` | Archivados | Archived |
+| `admin.archivedOn` | Archivado el {date} | Archived on {date} |
+| `admin.categoryHidden` | Sin platos activos: no se muestra en la carta. | No active dishes: not shown on the menu. |
+| `admin.categoryArchivedHint` | Categoría archivada: ni ella ni sus platos se muestran en la carta. | Archived category: neither it nor its dishes are shown on the menu. |
+| `admin.empty` | Aún no hay categorías. Crea la primera para empezar tu carta. | No categories yet. Create the first one to start your menu. |
+| `form.save` / `form.cancel` | Guardar / Cancelar | Save / Cancel |
+| `form.saved` | Cambios guardados | Changes saved |
+| `form.saveError` | No se han podido guardar los cambios. Inténtalo de nuevo. | Changes couldn't be saved. Please try again. |
+| `form.category` | Categoría | Category |
+| `form.name` | Nombre | Name |
+| `form.description` | Descripción corta | Short description |
+| `form.price` | Precio (€, IVA incluido) | Price (€, VAT included) |
+| `form.charCount` | {count}/{max} | {count}/{max} |
+| `form.allergens` | Alérgenos | Allergens |
+| `form.noAllergens` | Sin alérgenos | No allergens |
+| `form.photo` | Foto (opcional) | Photo (optional) |
+| `form.photoChoose` / `form.photoReplace` / `form.photoRemove` | Elegir foto / Cambiar foto / Quitar foto | Choose photo / Change photo / Remove photo |
+| `error.required` | Este campo es obligatorio. | This field is required. |
+| `error.tooLong` | Máximo {max} caracteres. | Maximum {max} characters. |
+| `error.price` | El precio debe ser mayor que cero, con como máximo dos decimales. | The price must be greater than zero, with at most two decimals. |
+| `error.allergenDeclaration` | Marca los alérgenos del plato o «Sin alérgenos». | Select the dish's allergens or "No allergens". |
+| `error.photoTooLarge` | La foto pesa demasiado. El tamaño máximo es 5 MB. | The photo is too large. The maximum size is 5 MB. |
+| `error.photoType` | Formato no admitido. Usa una foto JPEG, PNG o WebP. | Unsupported format. Use a JPEG, PNG or WebP photo. |
+| `common.notFound` | Esta página no existe. | This page doesn't exist. |
+
+### D9. Sesión del dueño (Supabase Auth)
+
+- Correo + contraseña con `supabase.auth.signInWithPassword`. Cualquier error de credenciales se muestra con `auth.invalid` (no se distingue «correo inexistente»).
+- Guardia `RequireOwner` en `/admin/*` (salvo `/admin/login`): sin sesión → redirige a `/admin/login?next=<ruta>`; con sesión pero sin fila `owner` en `backoffice_users` → cierra sesión y muestra `auth.notOwner`. Tras el login se navega a `next` (solo rutas internas que empiecen por `/admin`, para evitar redirecciones abiertas).
+- La garantía real está en RLS (D3): la guardia solo evita mostrar pantallas vacías.
+- Registro público desactivado: `enable_signup = false` en `supabase/config.toml` (local) y en la configuración de Auth de cada instancia (acción manual). La interfaz no tiene ningún enlace de registro.
+
+### D10. Accesibilidad y diseño visual
+
+- Tokens en `styles/tokens.scss` (colores, tipografía, espaciado). Paleta de alto contraste: texto `#111111` sobre `#FFFFFF`; texto secundario `#333333`; chips de alérgenos `#111111` sobre `#FFF1C2` con borde `#111111`; acento/enlaces `#0B3D5C`. **Todos los pares texto/fondo ≥ 7:1**, verificado por un test unitario que calcula el contraste WCAG de cada par declarado en un mapa `contrastPairs` exportado junto a los tokens (sin dependencias).
+- Mixin `tap-target` (`min-width`/`min-height: 44px`) aplicado a todo control; tamaño de texto base 18 px, `rem` en todo para respetar el zoom del sistema; sin `maximum-scale` en el viewport.
+- Estructura semántica: `h1` carta, `h2` por categoría, cada plato `article` con `h3`; precio y alérgenos como texto (los alérgenos en una lista con etiqueta visible «Alérgenos»), nunca solo iconos ni color. Selector de idioma como dos botones con `aria-pressed`. Estados de carga/error en `role="status"`/`role="alert"`.
+- Verificación: aserción LHCI `categories:accessibility = 1` (axe-core en Chrome real, incluye contraste AA y `target-size`), más el test de contraste 7:1 de tokens, más una revisión manual con VoiceOver/TalkBack y a 360 px de ancho registrada en tasks.
+
+### D11. Dependencias
+
+Del stack declarado (sin justificación adicional): `react`, `react-dom`, `typescript`, `vite`, `@vitejs/plugin-react`, `sass`, `@tanstack/react-query`, `@supabase/supabase-js`, `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `@playwright/test`.
+
+Nuevas, con justificación:
+
+| Dependencia | Tipo | Justificación |
+| --- | --- | --- |
+| `react-router` | runtime | Ver D1: enlaces profundos, «atrás» del móvil y redirección tras login con el mínimo código propio. |
+| `supabase` (CLI) | dev | Necesaria para versionar y aplicar migraciones, levantar Supabase local para tests de integración/e2e y ejecutar pgTAP (`supabase test db`). Sin ella no hay forma reproducible de cumplir la regla de incluir migración y RLS. |
+| `@lhci/cli` | dev | Única forma reproducible y automatizable de verificar el requisito de < 2 s en las condiciones de D7 y la auditoría de accesibilidad en navegador real; Playwright queda reservado a flujos entre roles. |
+
+### D12. Estrategia de pruebas
+
+- **Vitest + RTL** (jsdom, cliente Supabase simulado con un módulo falso): comportamiento de pantallas y funciones puras.
+- **pgTAP** (`supabase/tests/*.sql`, `supabase test db`): restricciones y RLS — la garantía en servidor de las reglas críticas.
+- **Vitest de integración** (`*.int.test.ts`, contra Supabase local): solo lo que no se puede probar en SQL (rechazo de alta de cuenta en Auth, límite del bucket de Storage).
+- **Playwright**: un único flujo entre roles (dueño gestiona → comensal ve).
+- **LHCI**: rendimiento y accesibilidad de la carta.
+
+## Risks / Trade-offs
+
+- [Presupuesto de 2 s con «4G lento» simulado y una SPA que necesita una petición a Supabase] → bundle de la carta separado, prefetch de la consulta en el arranque, `preconnect`, imágenes diferidas. Si no se cumple, primera palanca: sustituir `supabase-js` en la ruta `/` por un `fetch` directo al endpoint REST (≈ 30 KB gzip menos) sin cambiar la spec.
+- [Latencia de la región del proyecto Supabase respecto al local] → crear cada proyecto en la región UE más cercana (instrucción de instalación).
+- [El dueño puede tardar en ver un cambio reflejado si un comensal tiene la carta abierta] → aceptado: la spec habla de «abrir o recargar»; `refetchOnWindowFocus` mitiga.
+- [Fotos HEIC de iPhone] → iOS convierte a JPEG al elegir desde `<input type="file" accept="image/*">`; si llega un HEIC, se rechaza con `error.photoType`.
+- [Objetos huérfanos en Storage si falla el borrado de la foto anterior] → aceptado: coste despreciable; no afecta a la carta.
+- [Posiciones con huecos o duplicadas tras ediciones concurrentes del dueño desde dos móviles] → orden secundario por `created_at` en las consultas; un único dueño hace improbable el caso.
+- [Contraste 7:1 y objetivos de 44 px no son auditados como tales por axe (usa AA)] → test de tokens + revisión manual documentada.
+
+## Migration Plan
+
+Primer despliegue (no hay datos previos ni rollback de datos que considerar).
+
+**Acción manual en cada instancia desplegada** (se documenta en el `README.md`):
+1. Aplicar migraciones: `supabase link --project-ref <ref>` y `supabase db push` (crea tablas, RLS, funciones y el bucket `dish-photos`).
+2. Desactivar el registro público: Supabase Dashboard → Authentication → Sign In / Providers → desactivar «Allow new users to sign up».
+3. Crear la cuenta del dueño: Dashboard → Authentication → Add user (correo + contraseña, «Auto confirm»), y después en el SQL Editor:
+   `insert into public.backoffice_users (user_id, role) select id, 'owner' from auth.users where email = '<correo del dueño>';`
+4. Configurar el frontend con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` de la instancia y desplegar el build estático con fallback de SPA (todas las rutas → `index.html`).
+5. Generar el QR de las mesas apuntando a la URL raíz de la instancia (la misma para todas las mesas en este cambio).
+
+Rollback: desplegar el build anterior; la migración solo añade objetos, así que puede revertirse con una migración inversa (`drop` de tablas, tipo, funciones y bucket) si fuese necesario antes de tener datos reales.
+
+## Open Questions
+
+- Recuperación de contraseña del dueño desde la app (correo de restablecimiento): hoy se resuelve desde el Dashboard de Supabase; puede añadirse en un cambio posterior sin afectar a este.
+- Proveedor de hosting del frontend estático (Netlify, Vercel, Cloudflare Pages…): no afecta al código más allá del fallback de SPA.
