@@ -236,3 +236,250 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   cursor: pointer;
 }
+
+// Pedido desde la mesa (add-pedidos-mesa, design D8): mismos criterios de contraste y área táctil
+
+.venue-header__table {
+  margin: 0;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.order-notice {
+  margin: 0 0 $space-4;
+  padding: $space-3 $space-4;
+  font-weight: 600;
+  color: $color-text;
+  background: $color-accent-soft;
+  border-radius: $radius;
+
+  &--warning {
+    background: $color-notice-background;
+    border-left: 0.35rem solid $color-notice-accent;
+  }
+
+  p {
+    margin: 0 0 $space-2;
+  }
+}
+
+.dish__add {
+  align-self: flex-start;
+}
+
+// Con la barra del pedido, «Volver arriba» se coloca por encima y la carta deja sitio al final
+.menu-page:has(.order-bar) {
+  padding-bottom: 10rem;
+
+  .back-to-top {
+    bottom: calc(max(#{$space-4}, env(safe-area-inset-bottom)) + 4.5rem);
+  }
+}
+
+.order-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 11;
+  padding: $space-3 max(#{$space-4}, env(safe-area-inset-right)) max(#{$space-3}, env(safe-area-inset-bottom))
+    max(#{$space-4}, env(safe-area-inset-left));
+  background: $color-surface;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+
+  &__link {
+    display: flex;
+    width: 100%;
+    max-width: $content-max-width;
+    margin: 0 auto;
+    font-weight: 700;
+  }
+}
+
+.size-picker {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: $space-4;
+  color: $color-text;
+  background: $color-surface;
+  border: 0;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  &__title {
+    margin-top: 0;
+    font-size: $font-size-h2;
+  }
+
+  &__list {
+    display: grid;
+    gap: $space-2;
+    margin: 0 0 $space-4;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__option {
+    width: 100%;
+    justify-content: flex-start;
+    font-weight: 700;
+  }
+}
+
+.order-page {
+  padding-bottom: $space-6;
+
+  &__table {
+    margin: 0 0 $space-4;
+    font-weight: 700;
+  }
+
+  h1:focus {
+    outline: none;
+  }
+
+  h1:focus-visible {
+    outline: 3px solid $color-accent;
+    outline-offset: 2px;
+  }
+}
+
+.order-lines {
+  @include card;
+  margin: 0 0 $space-4;
+  padding: 0 $space-4;
+  list-style: none;
+}
+
+.order-line {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-4 0;
+  border-bottom: 1px solid $color-divider;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: $font-size-h3;
+    font-weight: 650;
+  }
+
+  &__amount {
+    margin: 0;
+    font-weight: 700;
+    color: $color-accent;
+    white-space: nowrap;
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__unit {
+    color: $color-text-secondary;
+  }
+
+  &__note {
+    width: 100%;
+  }
+
+  &__placed-note {
+    margin: 0;
+    color: $color-text-secondary;
+  }
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+
+  &__value {
+    min-width: 2ch;
+    font-size: $font-size-h3;
+    font-weight: 700;
+    text-align: center;
+  }
+}
+
+.order-total {
+  @include card;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 $space-4;
+  padding: $space-4;
+  font-size: $font-size-h3;
+}
+
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+  margin-top: $space-4;
+
+  &__confirm {
+    flex: 1 1 100%;
+  }
+}
+
+.order-number {
+  margin: 0 0 $space-2;
+  font-size: 2.25rem;
+}
+
+.order-status {
+  display: inline-block;
+  margin: 0 0 $space-4;
+  padding: $space-1 $space-3;
+  font-weight: 700;
+  color: $color-success;
+  background: $color-surface;
+  border-radius: 999px;
+}
+
+.order-help {
+  margin: 0;
+  color: $color-text-secondary;
+}
+
+.order-cards {
+  display: grid;
+  gap: $space-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-card {
+  @include card;
+  @include tap-target;
+  display: grid;
+  justify-content: stretch;
+  gap: $space-1;
+  padding: $space-4;
+  color: $color-text;
+  text-decoration: none;
+
+  &__number {
+    font-size: $font-size-h3;
+    font-weight: 800;
+    color: $color-accent;
+  }
+}

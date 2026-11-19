@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useI18n } from '../../i18n/useT';
 import { sortAllergens } from '../../lib/allergens';
 import { publicImageUrl } from '../../lib/rest';
@@ -10,10 +11,12 @@ interface Props {
   eagerPhoto?: boolean;
   /** Hasta que la carta se ha pintado, la foto solo reserva su hueco (design D6). */
   showPhoto?: boolean;
+  /** Botón «Añadir» de la carta de una mesa (spec table-ordering). */
+  action?: ReactNode;
 }
 
 /** Un plato de la carta: nombre, precios, descripción, foto y alérgenos siempre visibles. */
-export function DishCard({ dish, eagerPhoto = false, showPhoto = true }: Props) {
+export function DishCard({ dish, eagerPhoto = false, showPhoto = true, action }: Props) {
   const { lang, t } = useI18n();
   const titleId = `dish-${dish.id}`;
   const lines = priceLines(dish, lang);
@@ -54,6 +57,8 @@ export function DishCard({ dish, eagerPhoto = false, showPhoto = true }: Props) 
           </>
         )}
       </div>
+
+      {action}
 
       {dish.photo_path && !showPhoto && <span className="dish__photo dish__photo--pending" aria-hidden="true" />}
       {dish.photo_path && showPhoto && (

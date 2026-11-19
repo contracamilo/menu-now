@@ -39,57 +39,6 @@
   gap: $space-4;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: $space-1;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-
-  > label,
-  > legend {
-    font-weight: 600;
-    padding: 0;
-  }
-
-  &__count {
-    align-self: flex-end;
-    color: $color-text-secondary;
-    font-size: $font-size-small;
-  }
-
-  &__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $space-2;
-  }
-}
-
-.input,
-.select,
-.textarea {
-  width: 100%;
-  min-height: $tap-target-min;
-  padding: $space-2 $space-3;
-  font: inherit;
-  color: $color-text;
-  background: $color-surface;
-  border: $border-width solid $color-control-border;
-  border-radius: $radius;
-
-  &[aria-invalid='true'] {
-    border-color: $color-error;
-    border-width: 3px;
-  }
-}
-
-.textarea {
-  min-height: 5rem;
-  resize: vertical;
-}
-
 .checkbox {
   @include tap-target;
   justify-content: flex-start;
@@ -224,4 +173,59 @@
 .checkbox--strong {
   margin-top: $space-2;
   font-weight: 600;
+}
+
+// Mesas y QR imprimible (add-pedidos-mesa, design D9)
+.qr-page__actions {
+  margin-bottom: $space-4;
+}
+
+.qr-card {
+  @include card;
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: $space-4;
+  text-align: center;
+
+  &__venue {
+    @include label;
+    margin: 0;
+  }
+
+  &__table {
+    margin: $space-2 0;
+    font-size: 2.25rem;
+  }
+
+  &__code {
+    display: block;
+    width: 6cm;
+    height: 6cm;
+    margin: $space-3 auto;
+  }
+
+  &__text {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  &__url {
+    margin: $space-2 0 0;
+    font-size: $font-size-label;
+    color: $color-text-secondary;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media print {
+  .admin-top,
+  .qr-page__actions {
+    display: none;
+  }
+
+  body,
+  .qr-card {
+    background: #fff;
+    box-shadow: none;
+  }
 }

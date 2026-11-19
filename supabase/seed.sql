@@ -190,3 +190,11 @@ insert into public.dish_sizes (dish_id, label, price_cents, position) values
   ('00000000-0000-0000-0000-000000d00066', null, 450, 1),
   ('00000000-0000-0000-0000-000000d00067', null, 450, 1),
   ('00000000-0000-0000-0000-000000d00068', null, 450, 1);
+
+-- Mesas de referencia (add-pedidos-mesa): tokens fijos para desarrollo, e2e y medición.
+-- La carta de «Mesa 1» se abre en /t/00000000-0000-4000-8000-0000000000f1 (la mide LHCI).
+insert into public.tables (id, token, name, archived_at) values
+  ('00000000-0000-0000-0000-0000000b0001', '00000000-0000-4000-8000-0000000000f1', 'Mesa 1', null),
+  ('00000000-0000-0000-0000-0000000b0002', '00000000-0000-4000-8000-0000000000f2', 'Mesa 2', null),
+  ('00000000-0000-0000-0000-0000000b0003', '00000000-0000-4000-8000-0000000000f3', 'Terraza 1', null),
+  ('00000000-0000-0000-0000-0000000b0004', '00000000-0000-4000-8000-0000000000f4', 'Terraza 2', now());

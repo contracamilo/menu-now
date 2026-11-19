@@ -29,6 +29,9 @@ export function AdminLayout() {
             <Link className="button tap-target" to="/admin">
               {t('admin.title')}
             </Link>
+            <Link className="button tap-target" to="/admin/tables">
+              {t('admin.tables')}
+            </Link>
             <Link className="button tap-target" to="/admin/venue">
               {t('admin.venue')}
             </Link>

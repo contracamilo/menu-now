@@ -205,3 +205,55 @@ a {
     margin: 0;
   }
 }
+
+// Campos de formulario: compartidos por la administración y la nota del pedido (add-pedidos-mesa)
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  > label,
+  > legend {
+    font-weight: 600;
+    padding: 0;
+  }
+
+  &__count {
+    align-self: flex-end;
+    color: $color-text-secondary;
+    font-size: $font-size-small;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: $tap-target-min;
+  padding: $space-2 $space-3;
+  font: inherit;
+  color: $color-text;
+  background: $color-surface;
+  border: $border-width solid $color-control-border;
+  border-radius: $radius;
+
+  &[aria-invalid='true'] {
+    border-color: $color-error;
+    border-width: 3px;
+  }
+}
+
+.textarea {
+  min-height: 5rem;
+  resize: vertical;
+}

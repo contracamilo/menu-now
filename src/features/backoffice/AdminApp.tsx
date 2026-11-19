@@ -4,6 +4,9 @@ import { CatalogPage } from '../catalog/CatalogPage';
 import { CategoryForm } from '../catalog/CategoryForm';
 import { DishForm } from '../catalog/DishForm';
 import { VenuePage } from '../venue/VenuePage';
+import { TableForm } from '../tables/TableForm';
+import { TableQrPage } from '../tables/TableQrPage';
+import { TablesPage } from '../tables/TablesPage';
 import { AdminLayout } from './AdminLayout';
 import { ForgotPasswordPage } from './ForgotPasswordPage';
 import { LoginPage } from './LoginPage';
@@ -31,6 +34,10 @@ export default function AdminApp() {
         <Route path="categories/:id" element={<CategoryForm />} />
         <Route path="dishes/new" element={<DishForm />} />
         <Route path="dishes/:id" element={<DishForm />} />
+        <Route path="tables" element={<TablesPage />} />
+        <Route path="tables/new" element={<TableForm />} />
+        <Route path="tables/:id" element={<TableForm />} />
+        <Route path="tables/:id/qr" element={<TableQrPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

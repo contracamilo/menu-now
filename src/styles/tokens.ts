@@ -33,6 +33,13 @@ export const contrastPairs: Record<string, [foreground: ColorToken, background: 
   error: ['error', 'surface'],
   errorOnBackground: ['error', 'background'],
   success: ['success', 'surface'],
+  // Pedido desde la mesa (add-pedidos-mesa): avisos, barra, selector de tamaño, estado y tarjeta del QR
+  orderNotice: ['text', 'accentSoft'],
+  orderWarning: ['text', 'noticeBackground'],
+  orderBar: ['onAccent', 'accent'],
+  sizeOption: ['accent', 'surface'],
+  orderStatus: ['success', 'surface'],
+  qrCardUrl: ['textSecondary', 'surface'],
 };
 
 /** Bordes que identifican un control (≥ 3:1 con lo que tienen alrededor). */

@@ -45,7 +45,7 @@ npm run db:reset                  # migrations + reference menu (supabase/seed.s
 npm run dev                       # http://127.0.0.1:5173
 ```
 
-- **Diner menu:** <http://127.0.0.1:5173/>
+- **Diner menu:** <http://127.0.0.1:5173/> (browse only). To order, open a table's menu: the seed comes with *Mesa 1* at <http://127.0.0.1:5173/t/00000000-0000-4000-8000-0000000000f1> (also *Mesa 2*, *Terraza 1* and the archived *Terraza 2*, tokens ending in `f2`–`f4`).
 - **Admin:** <http://127.0.0.1:5173/admin>. Two development owner accounts come with the seed: `owner1@menu-now.test` and `owner2@menu-now.test`, password `menu-now-dev`.
 - **Emails (password reset):** local Supabase does not send real emails; open Mailpit (formerly Inbucket) at <http://127.0.0.1:54324> to read them. The link opens `/admin/reset-password`.
 - **Supabase Studio:** <http://127.0.0.1:54323>.
@@ -58,14 +58,14 @@ npm run dev                       # http://127.0.0.1:5173
 | `npm run typecheck` | TypeScript, including that `en.ts` has every key of `es.ts` | — |
 | `npm run db:test` | Database rules, RLS and RPCs (pgTAP) | `db:start` |
 | `npm run test:int` | Auth (no sign-up, password reset email) and Storage limits | `db:start` |
-| `npm run e2e` | Owner manages the menu → diner sees it (Playwright) | `db:start` + `db:reset` |
-| `npm run perf` | Lighthouse CI: LCP < 2 s, `/` JS ≤ 150 KB gzip, accessibility = 1 | `db:start` + `db:reset` |
+| `npm run e2e` | Cross-role flows (Playwright): owner manages the menu → diner sees it; owner creates a table → diner orders from its QR, including the owner archiving a dish, changing a price or archiving the table while the diner decides | `db:start` + `db:reset` |
+| `npm run perf` | Lighthouse CI on `/` and the reference table menu `/t/<token>`: LCP < 2 s, JS ≤ 150 KB gzip, accessibility = 1 | `db:start` + `db:reset` |
 
 ## Setting up a venue instance (manual steps)
 
 Each venue gets its own Supabase project and its own frontend deployment. Repeat for every instance:
 
-1. **Apply the migrations:** `npx supabase link --project-ref <ref>` and `npx supabase db push`. This creates the tables, RLS policies, functions, the «Incluidos» category, the venue settings row and the `images` bucket.
+1. **Apply the migrations:** `npx supabase link --project-ref <ref>` and `npx supabase db push`. This creates the tables, RLS policies, functions, the «Incluidos» category, the venue settings row, the `images` bucket, and the tables and orders used for ordering from the table. Re-run `db push` after updating the app to apply new migrations.
 2. **Configure Supabase Auth** in the Dashboard:
    - turn off *Allow new users to sign up*;
    - minimum password length: **8**;
@@ -78,7 +78,10 @@ Each venue gets its own Supabase project and its own frontend deployment. Repeat
    ```
    To remove an owner, delete their user in Authentication (their row is removed in cascade).
 4. **Deploy the frontend** with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from the instance (`npm run build`, upload `dist/`). Configure the host's **SPA fallback**: every route serves `index.html`.
-5. **Hand over:** ask the owner to fill in the venue name and logo in *Mi local*, and print the table QR codes pointing to the instance's root URL (the same for every table).
+5. **Time zone (only if the venue is not on mainland Spain time):** in the SQL Editor run
+   `update public.venue_settings set timezone = '<IANA zone, e.g. Atlantic/Canary>';`.
+   Order numbers restart every service day, which changes at 05:00 local time.
+6. **Hand over:** ask the owner to fill in the venue name and logo in *Mi local* and to create the venue's tables in *Mesas*. From the instance's **public URL** (not `localhost`: the QR encodes the address the admin is opened from, shown under the code), the owner opens *Ver QR* for each table, prints it (or downloads the SVG) and places it on that table. Each table has its own QR; renaming a table keeps its QR, and archiving it stops orders from that QR (the menu still opens, browse only). QR codes printed before this version point to the root URL, which now only lets diners browse: replace them with the per-table ones.
 
 Create each Supabase project in the EU region closest to the venue.
 
