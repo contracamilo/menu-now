@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 
@@ -28,22 +28,31 @@ export function useSession(): SessionState {
   return state;
 }
 
-/** ¿El usuario de la sesión es dueño? (RLS solo le deja leer su propia fila) */
-export function useIsOwner(userId: string | undefined) {
+export type BackofficeRole = 'owner' | 'staff';
+
+/** Rol del usuario de la sesión en la zona privada (RLS solo le deja leer su propia fila). */
+export function useBackofficeRole(userId: string | undefined) {
   return useQuery({
-    queryKey: ['is-owner', userId],
+    queryKey: ['backoffice-role', userId],
     enabled: Boolean(userId),
     staleTime: Infinity,
-    queryFn: async () => {
+    queryFn: async (): Promise<BackofficeRole | null> => {
       const { data, error } = await supabase
         .from('backoffice_users')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
       if (error) throw new Error(error.message);
-      return (data as { role: string } | null)?.role === 'owner';
+      const role = (data as { role: string } | null)?.role;
+      return role === 'owner' || role === 'staff' ? role : null;
     },
   });
+}
+
+/** Cierra la sesión y olvida los datos privados en caché (administración y panel de cocina). */
+export async function signOutBackoffice(queryClient: QueryClient) {
+  await supabase.auth.signOut();
+  for (const key of ['admin', 'kitchen', 'backoffice-role']) queryClient.removeQueries({ queryKey: [key] });
 }
 
 /** Solo se vuelve a rutas internas de la administración (evita redirecciones abiertas). */

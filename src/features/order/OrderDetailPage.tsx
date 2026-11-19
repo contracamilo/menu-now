@@ -39,7 +39,9 @@ export default function OrderDetailPage() {
           {t('order.number', { number: order.number })}
         </h1>
         <PlacedOrderView order={order} />
-        <p className="order-help">{t('order.receivedHelp')}</p>
+        {order.status !== 'served' && (
+          <p className="order-help">{t(order.status === 'cancelled' ? 'order.cancelledHelp' : 'order.receivedHelp')}</p>
+        )}
       </>
     );
   }

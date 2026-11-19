@@ -41,6 +41,69 @@ export interface FakeSession {
 
 type AuthListener = (event: string, session: FakeSession | null) => void;
 
+export type ChannelStatus = 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED';
+
+/** Cambio de `postgres_changes` tal como lo entrega Realtime. */
+export interface FakeChange {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  schema?: string;
+  table?: string;
+  new?: Record<string, unknown>;
+  old?: Record<string, unknown>;
+}
+
+type ChangeListener = { type: string; filter: Record<string, unknown>; callback: (payload: never) => void };
+
+/**
+ * Canal de Realtime falso: registra las suscripciones `postgres_changes` y deja que el test
+ * emita cambios (`emitChange`) y estados de suscripción (`emitStatus`).
+ */
+export class FakeChannel {
+  listeners: ChangeListener[] = [];
+  statusCallback: ((status: ChannelStatus, err?: Error) => void) | null = null;
+  subscribed = false;
+  removed = false;
+
+  constructor(
+    private fake: FakeSupabase,
+    readonly name: string,
+  ) {}
+
+  on(type: 'postgres_changes' | 'system', filter: Record<string, unknown>, callback: (payload: never) => void) {
+    this.listeners.push({ type, filter, callback });
+    return this;
+  }
+
+  subscribe(callback?: (status: ChannelStatus, err?: Error) => void) {
+    this.subscribed = true;
+    this.statusCallback = callback ?? null;
+    if (this.fake.autoSubscribe) queueMicrotask(() => this.emitStatus('SUBSCRIBED'));
+    return this;
+  }
+
+  emitChange(change: FakeChange) {
+    if (this.removed) return;
+    for (const { type, filter, callback } of this.listeners) {
+      const event = filter.event ?? '*';
+      if (type === 'postgres_changes' && (event === '*' || event === change.eventType)) {
+        (callback as (payload: FakeChange) => void)({ schema: 'public', table: String(filter.table ?? ''), new: {}, old: {}, ...change });
+      }
+    }
+  }
+
+  /** Mensaje `system` de Realtime (p. ej. «Subscribed to PostgreSQL»). */
+  emitSystem(payload: Record<string, unknown>) {
+    if (this.removed) return;
+    for (const { type, callback } of this.listeners) {
+      if (type === 'system') (callback as (payload: Record<string, unknown>) => void)(payload);
+    }
+  }
+
+  emitStatus(status: ChannelStatus) {
+    if (!this.removed) this.statusCallback?.(status);
+  }
+}
+
 export function ok(data: unknown = null): FakeResult {
   return { data, error: null };
 }
@@ -144,6 +207,9 @@ export class FakeSupabase {
   tables: Record<string, QueryHandler> = {};
   rpcs: Record<string, RpcHandler> = {};
   storageError: FakeError | null = null;
+  channels: FakeChannel[] = [];
+  /** Si es verdadero, cada canal recibe `SUBSCRIBED` justo después de suscribirse. */
+  autoSubscribe = true;
 
   /** Cuentas válidas para `signInWithPassword` (correo → contraseña). */
   users = new Map<string, { id: string; password: string }>();
@@ -160,6 +226,8 @@ export class FakeSupabase {
     this.tables = {};
     this.rpcs = {};
     this.storageError = null;
+    this.channels = [];
+    this.autoSubscribe = true;
     this.users.clear();
     this.session = null;
     this.listeners.clear();
@@ -170,6 +238,25 @@ export class FakeSupabase {
 
   from(table: string) {
     return new FakeQueryBuilder(this, table);
+  }
+
+  channel(name: string) {
+    const channel = new FakeChannel(this, name);
+    this.channels.push(channel);
+    return channel;
+  }
+
+  async removeChannel(channel: FakeChannel) {
+    channel.removed = true;
+    this.channels = this.channels.filter((c) => c !== channel);
+    return 'ok' as const;
+  }
+
+  /** Último canal abierto con ese nombre (el que está escuchando la pantalla). */
+  lastChannel(name?: string): FakeChannel {
+    const found = [...this.channels].reverse().find((c) => !name || c.name === name);
+    if (!found) throw new Error(`No hay ningún canal abierto${name ? ` con el nombre ${name}` : ''}`);
+    return found;
   }
 
   /** Equivalente falso de `restGet` (lib/rest.ts): un SELECT anónimo con parámetros PostgREST. */

@@ -40,6 +40,15 @@ export const contrastPairs: Record<string, [foreground: ColorToken, background: 
   sizeOption: ['accent', 'surface'],
   orderStatus: ['success', 'surface'],
   qrCardUrl: ['textSecondary', 'surface'],
+  // Panel de cocina (add-panel-cocina): estados, etiqueta «Nuevo», notas, banda sin conexión y diálogo
+  kitchenReceived: ['accent', 'accentSoft'],
+  kitchenInPreparation: ['text', 'noticeBackground'],
+  kitchenServed: ['success', 'surface'],
+  kitchenCancelled: ['error', 'chipBackground'],
+  kitchenNew: ['onAccent', 'accent'],
+  kitchenNote: ['textSecondary', 'surface'],
+  kitchenOffline: ['onAccent', 'error'],
+  kitchenDanger: ['error', 'surface'],
 };
 
 /** Bordes que identifican un control (≥ 3:1 con lo que tienen alrededor). */

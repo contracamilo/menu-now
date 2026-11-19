@@ -19,7 +19,7 @@ export function placeOrder(token: string, orderId: string, lines: DraftLine[]): 
 
 export const ordersQueryKey = (token: string, ids: string[]) => ['orders', token, ...ids] as const;
 
-/** Pedidos de hoy de esta mesa cuyos id conoce el móvil (`get_orders`, design D4). */
+/** Pedidos de hoy de esta mesa cuyos id conoce el móvil (`get_orders`, design D4), con su estado actual. */
 export function useOrders(token: string, ids: string[]) {
   return useQuery({
     queryKey: ordersQueryKey(token, ids),
@@ -28,5 +28,7 @@ export function useOrders(token: string, ids: string[]) {
         ? Promise.resolve<PlacedOrder[]>([])
         : restRpc<PlacedOrder[]>('get_orders', { p_table_token: token, p_order_ids: ids }),
     staleTime: 30_000,
+    // El estado lo cambia la cocina: se relee cada vez que el comensal abre o vuelve a la pantalla (add-panel-cocina D9)
+    refetchOnMount: 'always',
   });
 }

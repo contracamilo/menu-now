@@ -16,6 +16,7 @@ function renderAdmin(route: string) {
   return renderWithProviders(
     <Routes>
       <Route path="/admin/login" element={<LoginProbe />} />
+      <Route path="/admin/kitchen" element={<p>Panel de cocina</p>} />
       <Route
         path="/admin"
         element={
@@ -26,18 +27,23 @@ function renderAdmin(route: string) {
       >
         <Route index element={<p>Datos del catálogo</p>} />
         <Route path="venue" element={<p>Datos de Mi local</p>} />
+        <Route path="tables" element={<p>Datos de Mesas</p>} />
       </Route>
     </Routes>,
     { route, zone: 'admin' },
   );
 }
 
-function owners(...ids: string[]) {
+function roles(byUser: Record<string, string>) {
   fakeSupabase.tables.backoffice_users = (q) => {
     const userId = q.filters.find(([, column]) => column === 'user_id')?.[2] as string;
-    return ok(ids.includes(userId) ? { role: 'owner' } : null);
+    return ok(byUser[userId] ? { role: byUser[userId] } : null);
   };
   fakeSupabase.tables.venue_settings = () => ok([{ name: 'Bar Manolo', logo_path: null }]);
+}
+
+function owners(...ids: string[]) {
+  roles(Object.fromEntries(ids.map((id) => [id, 'owner'])));
 }
 
 describe('RequireOwner', () => {
@@ -82,4 +88,25 @@ describe('RequireOwner', () => {
     expect(await screen.findByText('Login ?next=%2Fadmin')).toBeInTheDocument();
     expect(screen.queryByText('Datos del catálogo')).not.toBeInTheDocument();
   });
+
+  it('[backoffice-access] «El personal inicia sesión en la tablet»: una sesión de personal que llega a /admin acaba en el panel', async () => {
+    roles({ s1: 'staff' });
+    fakeSupabase.session = { user: { id: 's1', email: 'barra@bar.test' } };
+    renderAdmin('/admin');
+    expect(await screen.findByText('Panel de cocina')).toBeInTheDocument();
+    expect(fakeSupabase.session).not.toBeNull();
+  });
+
+  it.each(['/admin', '/admin/venue', '/admin/tables'])(
+    '[backoffice-access] «El personal intenta abrir la carta en la administración»: %s lleva al panel sin datos de la administración',
+    async (route) => {
+      roles({ s1: 'staff' });
+      fakeSupabase.session = { user: { id: 's1', email: 'barra@bar.test' } };
+      renderAdmin(route);
+      expect(await screen.findByText('Panel de cocina')).toBeInTheDocument();
+      expect(screen.queryByText(/^Datos de/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      expect(fakeSupabase.calls.filter((c) => c.table === 'venue_settings')).toHaveLength(0);
+    },
+  );
 });

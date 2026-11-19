@@ -3,8 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useT } from '../../i18n/useT';
 import type { MessageKey } from '../../i18n/es';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
-import { supabase } from '../../lib/supabase';
 import { VenueHeader } from '../venue/VenueHeader';
+import { signOutBackoffice } from './session';
 
 /** Marco de las pantallas del dueño: local, navegación, idioma y cierre de sesión. */
 export function AdminLayout() {
@@ -14,9 +14,7 @@ export function AdminLayout() {
   const notice = (useLocation().state as { notice?: MessageKey } | null)?.notice;
 
   async function signOut() {
-    await supabase.auth.signOut();
-    queryClient.removeQueries({ queryKey: ['admin'] });
-    queryClient.removeQueries({ queryKey: ['is-owner'] });
+    await signOutBackoffice(queryClient);
     navigate('/admin/login', { replace: true });
   }
 
@@ -34,6 +32,9 @@ export function AdminLayout() {
             </Link>
             <Link className="button tap-target" to="/admin/venue">
               {t('admin.venue')}
+            </Link>
+            <Link className="button tap-target" to="/admin/kitchen">
+              {t('admin.kitchen')}
             </Link>
             <Link className="button tap-target" to="/">
               {t('admin.viewMenu')}

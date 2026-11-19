@@ -62,11 +62,14 @@ function setup(lines: DraftLine[], table: { name: string; active: boolean } | nu
 
 /** place_order falso: registra cada llamada y responde con lo que devuelva `respond`. */
 function servePlaceOrder(respond: (args: Record<string, unknown>) => PlaceOrderResult | 'network-error') {
+  // Como el servidor: get_orders devuelve los pedidos ya registrados cuyo id se le pasa
+  const registered: PlacedOrder[] = [];
   fakeSupabase.rpcs.place_order = (args) => {
     const result = respond(args);
+    if (result !== 'network-error' && result.status === 'placed') registered.push(result.order);
     return result === 'network-error' ? fail('Failed to fetch') : ok(result);
   };
-  fakeSupabase.rpcs.get_orders = () => ok([]);
+  fakeSupabase.rpcs.get_orders = (args) => ok(registered.filter((o) => (args.p_order_ids as string[]).includes(o.id)));
 }
 const placeCalls = () => fakeSupabase.rpcCalls.filter((c) => c.name === 'place_order');
 const lineNames = () => screen.queryAllByRole('heading', { level: 2 }).map((h) => h.textContent);
@@ -159,7 +162,7 @@ describe('OrderSummaryPage', () => {
       new Promise((resolve) => {
         release = () => resolve(ok({ status: 'placed', order: placed(args.p_order_id as string, [cana()]) }));
       });
-    fakeSupabase.rpcs.get_orders = () => ok([]);
+    fakeSupabase.rpcs.get_orders = (args) => ok([placed((args.p_order_ids as string[])[0], [cana()])]);
     setup([cana()]);
     const user = userEvent.setup();
     const button = await screen.findByRole('button', { name: 'Confirmar pedido' });
