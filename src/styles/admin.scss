@@ -1,0 +1,226 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+// Estilos solo de la administración (se cargan con su chunk diferido)
+
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+  margin-bottom: $space-4;
+  padding-bottom: $space-3;
+  border-bottom: $border-width solid $color-border;
+
+  &__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+}
+
+.notice {
+  padding: $space-3;
+  color: $color-text;
+  background: $color-notice-background;
+  border: $border-width solid $color-border;
+  border-radius: $radius;
+}
+
+.hint {
+  color: $color-text-secondary;
+  font-size: $font-size-small;
+}
+
+// Formularios
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  > label,
+  > legend {
+    font-weight: 600;
+    padding: 0;
+  }
+
+  &__count {
+    align-self: flex-end;
+    color: $color-text-secondary;
+    font-size: $font-size-small;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: $tap-target-min;
+  padding: $space-2 $space-3;
+  font: inherit;
+  color: $color-text;
+  background: $color-background;
+  border: $border-width solid $color-border;
+  border-radius: $radius;
+
+  &[aria-invalid='true'] {
+    border-color: $color-error;
+    border-width: 3px;
+  }
+}
+
+.textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.checkbox {
+  @include tap-target;
+  justify-content: flex-start;
+  gap: $space-3;
+  font-weight: 400;
+  cursor: pointer;
+
+  input {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0;
+    accent-color: $color-accent;
+    flex-shrink: 0;
+  }
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0 $space-3;
+}
+
+.file-button:focus-within {
+  @include focus-ring;
+}
+
+.image-preview {
+  display: block;
+  max-width: 100%;
+  border: 1px solid $color-border;
+  border-radius: $radius;
+
+  &--logo {
+    width: 6rem;
+    height: 6rem;
+    object-fit: contain;
+  }
+
+  &--dish {
+    width: 100%;
+    max-width: 20rem;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+}
+
+// Catálogo
+.catalog-category,
+.catalog-archived {
+  margin-top: $space-6;
+  padding-top: $space-3;
+  border-top: 3px solid $color-border;
+}
+
+.catalog-category__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.button--icon {
+  padding: $space-1;
+  font-size: 1.25rem;
+}
+
+.catalog-dishes {
+  margin: $space-3 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalog-dish {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  padding: $space-3 0;
+  border-bottom: 1px solid $color-border;
+
+  &__summary {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+
+  &__name {
+    margin: 0;
+  }
+
+  &__prices {
+    margin: 0;
+    color: $color-text-secondary;
+  }
+}
+
+.auth-page__lang {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $space-4;
+}
+
+// Formulario de plato
+.size-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $space-2;
+  padding: $space-3 0;
+  border-bottom: 1px solid $color-border;
+
+  @media (min-width: 30rem) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+
+    .row-actions {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.checkbox--strong {
+  margin-top: $space-2;
+  font-weight: 600;
+}
