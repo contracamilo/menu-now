@@ -1,0 +1,15 @@
+@use 'tokens' as *;
+
+// Área táctil mínima de 44×44 CSS px para cualquier control (design D10)
+@mixin tap-target {
+  min-width: $tap-target-min;
+  min-height: $tap-target-min;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin focus-ring {
+  outline: 3px solid $color-accent;
+  outline-offset: 2px;
+}
