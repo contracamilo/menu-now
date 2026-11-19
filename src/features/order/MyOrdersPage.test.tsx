@@ -5,7 +5,7 @@ import { storageKey } from '../../i18n/I18nProvider';
 import type { PlacedOrder } from '../../lib/types';
 import { fakeSupabase, ok } from '../../test/fakeSupabase';
 import { serveTableMenu, TOKEN } from '../../test/fakeMenu';
-import { renderWithProviders } from '../../test/render';
+import { renderWithProviders, testQueryClient } from '../../test/render';
 import { TableApp } from './TableApp';
 
 const order = (n: number): PlacedOrder => ({
@@ -23,7 +23,7 @@ function serveOrders(today: PlacedOrder[]) {
   fakeSupabase.rpcs.get_orders = (args) => ok(today.filter((o) => (args.p_order_ids as string[]).includes(o.id)));
 }
 
-function renderMine(storedIds: string[]) {
+function renderMine(storedIds: string[], queryClient = testQueryClient()) {
   localStorage.setItem(storageKey('menu'), 'es');
   localStorage.setItem(`menu-now.orders.${TOKEN}`, JSON.stringify(storedIds));
   serveTableMenu();
@@ -31,7 +31,7 @@ function renderMine(storedIds: string[]) {
     <Routes>
       <Route path="/t/:token/*" element={<TableApp />} />
     </Routes>,
-    { route: `/t/${TOKEN}/orders`, zone: 'menu' },
+    { route: `/t/${TOKEN}/orders`, zone: 'menu', queryClient },
   );
 }
 
@@ -65,5 +65,20 @@ describe('MyOrdersPage', () => {
     renderMine([]);
     expect(await screen.findByText('Todavía no has hecho ningún pedido desde este móvil.')).toBeInTheDocument();
     expect(fakeSupabase.rpcCalls.some((c) => c.name === 'get_orders')).toBe(false);
+  });
+
+  it('[table-ordering] «El comensal comprueba si su pedido está en marcha»: al volver a «Mis pedidos» ve «En preparación»', async () => {
+    let today = [order(3)];
+    fakeSupabase.rpcs.get_orders = () => ok(today);
+    const queryClient = testQueryClient();
+    const first = renderMine([order(3).id], queryClient);
+    expect(await screen.findByRole('link', { name: /Pedido nº 3/ })).toHaveTextContent('Estado: Recibido');
+    first.unmount();
+
+    // El personal pasa el pedido 3 a «En preparación»; el comensal vuelve a la pantalla
+    today = [{ ...order(3), status: 'in_preparation' }];
+    renderMine([order(3).id], queryClient);
+    await waitFor(() => expect(screen.getByRole('link', { name: /Pedido nº 3/ })).toHaveTextContent('Estado: En preparación'));
+    expect(fakeSupabase.rpcCalls.filter((c) => c.name === 'get_orders')).toHaveLength(2);
   });
 });

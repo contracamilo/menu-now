@@ -67,4 +67,21 @@ describe('OrderDetailPage', () => {
     renderDetail('bbbbbbbb-0000-4000-8000-000000000009');
     expect(await screen.findByText('No encontramos este pedido en este móvil.')).toBeInTheDocument();
   });
+
+  it('[table-ordering] «El comensal ve que su pedido se ha cancelado»: estado «Cancelado» y texto de ayuda', async () => {
+    fakeSupabase.rpcs.get_orders = () => ok([{ ...order3, number: 8, status: 'cancelled' }]);
+    renderDetail(order3.id);
+    expect(await screen.findByText('Estado: Cancelado')).toBeInTheDocument();
+    expect(screen.getByText('Este pedido se ha cancelado. Si tienes dudas, pregunta al personal.')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['in_preparation', 'Estado: En preparación', true],
+    ['served', 'Estado: Servido', false],
+  ] as const)('estado %s: muestra «%s»', async (status, text, help) => {
+    fakeSupabase.rpcs.get_orders = () => ok([{ ...order3, status }]);
+    renderDetail(order3.id);
+    expect(await screen.findByText(text)).toBeInTheDocument();
+    expect(Boolean(screen.queryByText(/Lo estamos preparando|pregunta al personal/))).toBe(help);
+  });
 });

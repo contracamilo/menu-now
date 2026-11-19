@@ -7,10 +7,14 @@ import { VenuePage } from '../venue/VenuePage';
 import { TableForm } from '../tables/TableForm';
 import { TableQrPage } from '../tables/TableQrPage';
 import { TablesPage } from '../tables/TablesPage';
+import { HistoryPage } from '../kitchen/HistoryPage';
+import { KitchenLayout } from '../kitchen/KitchenLayout';
+import { KitchenPage } from '../kitchen/KitchenPage';
 import { AdminLayout } from './AdminLayout';
 import { ForgotPasswordPage } from './ForgotPasswordPage';
 import { LoginPage } from './LoginPage';
 import { ResetPasswordPage } from './ResetPasswordPage';
+import { RequireKitchen } from './RequireKitchen';
 import { RequireOwner } from './RequireOwner';
 import '../../styles/admin.scss';
 
@@ -21,6 +25,17 @@ export default function AdminApp() {
       <Route path="login" element={<LoginPage />} />
       <Route path="forgot-password" element={<ForgotPasswordPage />} />
       <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route
+        path="kitchen"
+        element={
+          <RequireKitchen>
+            <KitchenLayout />
+          </RequireKitchen>
+        }
+      >
+        <Route index element={<KitchenPage />} />
+        <Route path="history" element={<HistoryPage />} />
+      </Route>
       <Route
         element={
           <RequireOwner>

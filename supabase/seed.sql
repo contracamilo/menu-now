@@ -20,6 +20,18 @@ insert into public.backoffice_users (user_id, role) values
   ('00000000-0000-0000-0000-0000000000a1', 'owner'),
   ('00000000-0000-0000-0000-0000000000a2', 'owner');
 
+-- Personal de desarrollo (contraseña: menu-now-dev): solo accede al panel de cocina
+insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new) values
+  ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000000a5', 'authenticated', 'authenticated', 'staff@menu-now.test',
+   extensions.crypt('menu-now-dev', extensions.gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
+insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at) values
+  ('00000000-0000-0000-0000-0000000000a5', '00000000-0000-0000-0000-0000000000a5', jsonb_build_object('sub', '00000000-0000-0000-0000-0000000000a5', 'email', 'staff@menu-now.test'), 'email', now(), now(), now());
+insert into public.backoffice_users (user_id, role) values
+  ('00000000-0000-0000-0000-0000000000a5', 'staff');
+
 update public.venue_settings set name = 'Bar Manolo', logo_path = 'seed/logo.png';
 
 insert into public.categories (id, name, position) values

@@ -1,9 +1,11 @@
-import { screen } from '@testing-library/react';
+import { cleanup, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { fakeSupabase, ok } from '../../test/fakeSupabase';
+import { kitchenOrder, serveKitchenOrders, signedInAs } from '../../test/fakeKitchen';
 import { renderWithProviders } from '../../test/render';
+import { renderAdminApp } from '../../test/renderAdmin';
 import { MenuPage } from '../menu/MenuPage';
 import { LoginPage } from './LoginPage';
 import { safeNext } from './session';
@@ -32,7 +34,7 @@ const registerControl = /regist|sign ?up|crear (una )?cuenta|alta/i;
 describe('LoginPage', () => {
   it('[backoffice-access] «El dueño inicia sesión»: llega a la pantalla que intentaba abrir', async () => {
     renderLogin('/admin/login?next=%2Fadmin%2Fvenue');
-    expect(screen.getByRole('heading', { name: 'Acceso del dueño' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument();
     await signIn('dueno@bar.test', 'correcta-123');
     expect(await screen.findByText('Pantalla de Mi local')).toBeInTheDocument();
   });
@@ -68,7 +70,7 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Correo o contraseña incorrectos.');
   });
 
-  it('[backoffice-access] «Nadie puede registrarse desde la aplicación»: ni en el login ni en la carta', async () => {
+  it('[backoffice-access] «Nadie puede registrarse desde la aplicación»: ni en el login, ni en la carta, ni en el panel de cocina', async () => {
     renderLogin();
     const controls = [...screen.getAllByRole('link'), ...screen.getAllByRole('button')];
     expect(controls.map((c) => c.textContent).join(' | ')).not.toMatch(registerControl);
@@ -79,5 +81,13 @@ describe('LoginPage', () => {
     await screen.findByText("The menu isn't available yet. Please ask the staff.");
     const menuControls = [...screen.queryAllByRole('link'), ...screen.queryAllByRole('button')];
     expect(menuControls.map((c) => c.textContent).join(' | ')).not.toMatch(registerControl);
+    cleanup();
+
+    signedInAs(fakeSupabase, 'staff');
+    serveKitchenOrders(fakeSupabase, [kitchenOrder({ number: 4 })]);
+    renderAdminApp('/admin/kitchen');
+    await screen.findByRole('heading', { name: 'Nº 4' });
+    const panelControls = [...screen.getAllByRole('link'), ...screen.getAllByRole('button')];
+    expect(panelControls.map((c) => c.textContent).join(' | ')).not.toMatch(registerControl);
   });
 });

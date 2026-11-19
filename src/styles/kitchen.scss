@@ -1,0 +1,240 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+// Panel de cocina (add-panel-cocina, design D8): tablet apoyada en la barra, se lee de lejos y
+// se toca con prisa. Va en el chunk de la administración.
+
+$kitchen-action-height: 56px;
+
+.kitchen {
+  min-height: 100vh;
+
+  &__top {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: $space-4 $space-4 0;
+  }
+
+  &__title {
+    margin: 0 0 $space-3;
+  }
+
+  &__main {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: $space-4;
+  }
+
+  &__empty {
+    @include card;
+    padding: $space-5;
+    font-size: $font-size-h3;
+    text-align: center;
+  }
+}
+
+.kitchen-offline {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0;
+  padding: $space-3 $space-4;
+  color: $color-on-accent;
+  background: $color-error;
+  font-weight: 700;
+  text-align: center;
+}
+
+.kitchen-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  border-bottom: 2px solid $color-divider;
+
+  &__tab {
+    padding: $space-2 $space-4;
+    min-height: $kitchen-action-height;
+    color: $color-accent;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 4px solid transparent;
+
+    &[aria-current='page'] {
+      color: $color-text;
+      border-bottom-color: $color-accent;
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+}
+
+.kitchen-conflict {
+  @include card;
+  padding: $space-3 $space-4;
+}
+
+.kitchen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: $space-4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > li {
+    display: flex;
+  }
+}
+
+.kitchen-card {
+  @include card;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-4;
+  border: 3px solid transparent;
+
+  &--new {
+    border-color: $color-accent;
+  }
+
+  &__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: $space-2 $space-4;
+  }
+
+  &__number {
+    margin: 0;
+    font-size: 2rem;
+  }
+
+  &__table {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  &__new {
+    margin: 0 0 0 auto;
+    padding: $space-1 $space-3;
+    color: $color-on-accent;
+    background: $color-accent;
+    border-radius: $radius;
+    font-weight: 700;
+  }
+
+  &__status {
+    align-self: flex-start;
+    margin: 0;
+    padding: $space-1 $space-3;
+    border-radius: $radius;
+    font-weight: 700;
+
+    &--received {
+      color: $color-accent;
+      background: $color-accent-soft;
+    }
+
+    &--in_preparation {
+      color: $color-text;
+      background: $color-notice-background;
+    }
+
+    &--served {
+      color: $color-success;
+      background: $color-surface;
+      box-shadow: inset 0 0 0 2px $color-success;
+    }
+
+    &--cancelled {
+      color: $color-error;
+      background: $color-chip-background;
+    }
+  }
+
+  &__elapsed {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    padding: $space-2 0;
+    border-top: 1px solid $color-divider;
+  }
+
+  &__line {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  &__note {
+    color: $color-text-secondary;
+    font-style: italic;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $space-4;
+    margin-top: auto;
+    padding-top: $space-3;
+  }
+}
+
+// Botones de al menos 56 px (por encima de los 44 px exigidos): se usan de pie y con prisa
+.kitchen-action {
+  min-height: $kitchen-action-height;
+  min-width: $kitchen-action-height;
+  font-size: 1.15rem;
+
+  &.button--primary {
+    flex: 1;
+  }
+
+  &--cancel,
+  &--danger {
+    color: $color-error;
+    border-color: $color-error;
+  }
+}
+
+.kitchen-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  padding: $space-5;
+  color: $color-text;
+  background: $color-surface;
+  border: 0;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  &__title {
+    margin-top: 0;
+    font-size: $font-size-h2;
+  }
+}
+
+.kitchen-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-4;
+
+  > * {
+    flex: 1;
+  }
+}

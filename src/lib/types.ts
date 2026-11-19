@@ -54,7 +54,7 @@ export interface DraftLine {
   note: string;
 }
 
-export type OrderStatus = 'received';
+export type OrderStatus = 'received' | 'in_preparation' | 'served' | 'cancelled';
 
 export interface PlacedOrderItem {
   dish_name: string;
