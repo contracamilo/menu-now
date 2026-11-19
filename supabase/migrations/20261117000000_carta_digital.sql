@@ -1,5 +1,5 @@
 -- add-carta-digital: carta pública, catálogo del dueño, datos del local y acceso a la administración.
--- Ver openspec/changes/add-carta-digital/design.md (D2–D5).
+-- Ver openspec/changes/archive/2026-11-19-add-carta-digital/design.md (D2–D5).
 
 ------------------------------------------------------------------------------
 -- D2. Modelo de datos
