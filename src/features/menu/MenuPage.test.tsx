@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { Dish, MenuCategory } from '../../lib/types';
@@ -145,6 +145,7 @@ describe('MenuPage', () => {
     const card = await screen.findByRole('article', { name: 'Tostada con tomate' });
     expect(within(card).getByText('2,50 €')).toBeInTheDocument();
     expect(within(card).getByText('Pan de pueblo, tomate rallado y AOVE')).toBeInTheDocument();
+    await waitFor(() => expect(card.querySelector('img')).not.toBeNull());
     const photo = card.querySelector('img');
     expect(photo).toHaveAttribute('src', expect.stringContaining('dishes/tostada/foto.jpg'));
     expect(photo).toHaveAttribute('width', '480');
@@ -302,6 +303,7 @@ describe('MenuPage', () => {
     ]);
     const { container } = renderMenu();
     await screen.findByRole('article', { name: 'a' });
+    await waitFor(() => expect(container.querySelectorAll('.dish img')).toHaveLength(3));
     expect([...container.querySelectorAll('.dish img')].map((img) => img.getAttribute('loading'))).toEqual([
       'eager',
       'eager',

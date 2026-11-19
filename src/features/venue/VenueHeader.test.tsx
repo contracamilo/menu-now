@@ -45,3 +45,15 @@ describe('VenueHeader', () => {
     expect(screen.getByRole('img', { name: 'Bar Manolo' })).toBeInTheDocument();
   });
 });
+
+describe('petición temprana del local', () => {
+  it('usa la petición que lanzó index.html y no repite la consulta', async () => {
+    (window as unknown as Record<string, unknown>).__menuNowEarlyVenue = Promise.resolve([
+      { name: 'Bar Temprano', logo_path: null },
+    ]);
+    renderWithProviders(<VenueHeader />, { zone: 'menu' });
+    expect(await screen.findByRole('heading', { name: 'Bar Temprano' })).toBeInTheDocument();
+    expect(fakeSupabase.calls.filter((c) => c.table === 'venue_settings')).toHaveLength(0);
+    expect((window as unknown as Record<string, unknown>).__menuNowEarlyVenue).toBeUndefined();
+  });
+});

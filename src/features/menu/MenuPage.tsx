@@ -5,6 +5,7 @@ import { VenueHeader } from '../venue/VenueHeader';
 import { BackToTop } from './BackToTop';
 import { CategoryIndex } from './CategoryIndex';
 import { DishCard } from './DishCard';
+import { useAfterFirstPaint } from './useAfterFirstPaint';
 import { useMenu } from './useMenu';
 import { visibleCategories } from './visibleCategories';
 import '../../styles/menu.scss';
@@ -14,6 +15,9 @@ export function MenuPage() {
   const t = useT();
   const menu = useMenu();
   const categories = useMemo(() => visibleCategories(menu.data ?? [], t), [menu.data, t]);
+
+  // Las fotos se piden tras pintar el texto: así el texto es lo primero y el LCP (design D6)
+  const showPhotos = useAfterFirstPaint(categories.length > 0);
 
   // Índices de las dos primeras fotos del listado, que no se difieren
   const eagerIds = useMemo(
@@ -67,7 +71,7 @@ export function MenuPage() {
               {category.name}
             </h2>
             {category.dishes.map((dish) => (
-              <DishCard key={dish.id} dish={dish} eagerPhoto={eagerIds.has(dish.id)} />
+              <DishCard key={dish.id} dish={dish} showPhoto={showPhotos} eagerPhoto={eagerIds.has(dish.id)} />
             ))}
           </section>
         ))}

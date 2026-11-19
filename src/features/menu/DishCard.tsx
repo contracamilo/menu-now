@@ -8,10 +8,12 @@ interface Props {
   dish: Dish;
   /** Las dos primeras fotos del listado se cargan sin diferir (design D6). */
   eagerPhoto?: boolean;
+  /** Hasta que la carta se ha pintado, la foto solo reserva su hueco (design D6). */
+  showPhoto?: boolean;
 }
 
 /** Un plato de la carta: nombre, precios, descripción, foto y alérgenos siempre visibles. */
-export function DishCard({ dish, eagerPhoto = false }: Props) {
+export function DishCard({ dish, eagerPhoto = false, showPhoto = true }: Props) {
   const { lang, t } = useI18n();
   const titleId = `dish-${dish.id}`;
   const lines = priceLines(dish, lang);
@@ -53,7 +55,8 @@ export function DishCard({ dish, eagerPhoto = false }: Props) {
         )}
       </div>
 
-      {dish.photo_path && (
+      {dish.photo_path && !showPhoto && <span className="dish__photo dish__photo--pending" aria-hidden="true" />}
+      {dish.photo_path && showPhoto && (
         <img
           className="dish__photo"
           src={publicImageUrl(dish.photo_path)}

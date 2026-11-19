@@ -1,25 +1,19 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { restGet } from '../../lib/rest';
 import type { MenuCategory } from '../../lib/types';
+import { MENU_PARAMS, takeEarly } from '../../lib/publicQueries';
+
+export { MENU_PARAMS };
 
 export const menuQueryKey = ['menu'] as const;
 
-// design D6: una sola petición con platos y tamaños embebidos, siempre como anónimo.
-// Se filtra lo archivado también aquí (además de RLS) para que la consulta sea explícita.
-export const MENU_PARAMS = {
-  select:
-    'id,is_included,name,position,' +
-    'dishes(id,name,description,included_with,photo_path,allergens,no_allergens,position,' +
-    'dish_sizes(id,label,price_cents,position))',
-  archived_at: 'is.null',
-  'dishes.archived_at': 'is.null',
-  order: 'position,created_at',
-  'dishes.order': 'position,created_at',
-  'dishes.dish_sizes.order': 'position',
-};
-
+/**
+ * Una sola petición anónima con platos y tamaños embebidos (design D6); se filtra lo archivado
+ * también aquí (además de RLS) para que la consulta sea explícita. La primera vez usa la
+ * petición que index.html lanzó en paralelo con la descarga del JS; los reintentos van directos.
+ */
 export function fetchMenu(): Promise<MenuCategory[]> {
-  return restGet<MenuCategory[]>('categories', MENU_PARAMS);
+  return takeEarly<MenuCategory[]>('__menuNowEarlyMenu') ?? restGet<MenuCategory[]>('categories', MENU_PARAMS);
 }
 
 export const menuQuery = { queryKey: menuQueryKey, queryFn: fetchMenu };
