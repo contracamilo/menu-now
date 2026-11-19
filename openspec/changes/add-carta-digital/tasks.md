@@ -65,6 +65,13 @@ Convención: cada escenario de las specs se cita como `[capacidad] «Nombre del 
 - [x] 8.3 Documentar en `README.md` la puesta en marcha local (incluido Inbucket para ver los correos) y la acción manual por instancia (design, Migration Plan: migraciones, configuración de Auth, SMTP y Redirect URLs, alta y baja de dueños, variables de entorno, fallback SPA, «Mi local», QR). Verificar: seguir los pasos desde un clon limpio deja la carta, la administración y el restablecimiento de contraseña funcionando en local.
 - [x] 8.4 Comprobar la trazabilidad: cada escenario de `specs/menu`, `specs/catalog-management`, `specs/backoffice-access` y `specs/venue-settings` aparece citado en al menos una tarea con test; ejecutar `npm test`, `npm run test:int`, `supabase test db`, `npx playwright test`, `npm run perf` y `openspec validate add-carta-digital --strict`. Verificar: todo en verde.
 
+## 9. Ajustes tras la revisión de la carta (2026-11-19)
+
+- [ ] 9.1 Aplicar el estilo suave y la jerarquía de textos de design D10 (tokens, `global.scss`, `menu.scss`, `admin.scss`, cabecera del local como tarjeta con etiqueta en versalitas). Verificar: `src/styles/contrast.test.ts` exige ≥ 7:1 a todos los pares (incluidos los que van sobre el fondo gris) y ≥ 3:1 al borde de los controles; `VenueHeader.test.tsx` comprueba la etiqueta bajo el nombre. Cubre (tokens) `[menu] «El comensal lee y toca la carta a pleno sol»`.
+- [ ] 9.2 Implementar `CategoryIndex` (carrusel con flechas, design D6). Verificar con `src/features/menu/CategoryIndex.test.tsx` (medidas simuladas): `[menu] «El comensal ve que hay más categorías en el índice»` (flecha derecha al abrir; tras desplazar, flecha izquierda; al final, sin flecha derecha; tocar la flecha desplaza el índice) y `«Todas las categorías caben en el índice»` (sin flechas); `MenuPage.test.tsx` sigue cubriendo `«El comensal salta a una categoría desde el índice»`.
+- [ ] 9.3 Implementar el botón «Volver arriba» (design D6). Verificar con `src/features/menu/BackToTop.test.tsx`: `[menu] «El comensal abre la carta»` (sin botón al principio) y `«El comensal vuelve arriba tras elegir una categoría»` (aparece tras bajar, vuelve al inicio, el foco pasa al `h1` y el botón desaparece).
+- [ ] 9.4 Volver a medir: `npm run perf` en verde, revisión a 360 px sin desplazamiento horizontal y con objetivos ≥ 44×44 px (actualizar `docs/a11y-review.md`), `npx playwright test` y `openspec validate add-carta-digital --strict`. Verificar: todo en verde.
+
 ## Workflow follow-up
 
 - Verificar la implementación contra las specs con el flujo de verify.

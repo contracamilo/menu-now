@@ -26,7 +26,7 @@ La carta MUST mostrar las categorías en el orden definido por el dueño y, dent
 - **AND** ve los platos de «Bocadillos» en ese mismo orden
 
 ### Requirement: Índice de categorías
-La carta MUST mostrar en su parte superior un índice con las categorías visibles, en el mismo orden que la carta. Al elegir una categoría del índice, la carta MUST llevar al comensal a esa categoría.
+La carta MUST mostrar en su parte superior un índice con las categorías visibles, en el mismo orden que la carta, en una sola fila que se desplaza lateralmente. Cuando hay categorías del índice que no caben a la vista, la carta MUST indicarlo con una flecha en el lado donde quedan ocultas; al tocar la flecha, el índice MUST desplazarse hacia ese lado. Al elegir una categoría del índice, la carta MUST llevar al comensal a esa categoría.
 
 #### Scenario: El comensal salta a una categoría desde el índice
 - **GIVEN** la carta tiene visibles las categorías «Desayunos», «Bocadillos» y «Bebidas»
@@ -34,6 +34,33 @@ La carta MUST mostrar en su parte superior un índice con las categorías visibl
 - **THEN** ve arriba un índice con «Desayunos», «Bocadillos» y «Bebidas»
 - **WHEN** toca «Bebidas» en el índice
 - **THEN** la carta le lleva al comienzo de la categoría «Bebidas»
+
+#### Scenario: El comensal ve que hay más categorías en el índice
+- **GIVEN** la carta tiene más categorías visibles de las que caben a lo ancho de la pantalla del comensal
+- **WHEN** el comensal abre la carta
+- **THEN** ve las primeras categorías del índice y una flecha a la derecha que indica que hay más
+- **WHEN** toca la flecha o desliza el índice hacia la izquierda
+- **THEN** ve las siguientes categorías y una flecha a la izquierda que indica que hay categorías anteriores
+- **AND** cuando llega a la última categoría, deja de ver la flecha de la derecha
+
+#### Scenario: Todas las categorías caben en el índice
+- **GIVEN** las categorías visibles caben a lo ancho de la pantalla del comensal
+- **WHEN** el comensal abre la carta
+- **THEN** ve el índice completo sin ninguna flecha
+
+### Requirement: Volver al inicio de la carta
+Cuando el comensal se ha desplazado hacia abajo por la carta, el sistema MUST mostrar un botón fijo, siempre visible, para volver al inicio de la carta. Al principio de la carta, el botón MUST NOT mostrarse.
+
+#### Scenario: El comensal vuelve arriba tras elegir una categoría
+- **GIVEN** el comensal ha elegido «Bebidas» en el índice y la carta le ha llevado a esa categoría
+- **WHEN** toca el botón para volver arriba
+- **THEN** la carta le lleva a su inicio, donde están el nombre del local, el aviso de alergias y el índice
+- **AND** el botón deja de mostrarse
+
+#### Scenario: El comensal abre la carta
+- **GIVEN** un comensal que abre la carta
+- **WHEN** todavía no se ha desplazado hacia abajo
+- **THEN** no ve el botón para volver arriba
 
 ### Requirement: Solo platos activos
 La carta MUST mostrar todos los platos activos de cada categoría visible y MUST NOT mostrar nunca un plato archivado. Un plato activo es un plato que el dueño no ha archivado.

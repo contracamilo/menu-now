@@ -59,6 +59,9 @@ Ninguna (no hay especificaciones vivas todavía).
 | 2026-11-19 | Puede haber **varios dueños**, cada uno con su propia cuenta y los mismos permisos. Las cuentas se dan de alta al instalar el local. |
 | 2026-11-19 | La carta muestra un **índice de categorías** en la parte superior que lleva a cada categoría. |
 | 2026-11-19 | El dueño edita el **nombre y el logo** del local desde la administración; se muestran en la carta y en la administración. Sin logo, solo se muestra el nombre. |
+| 2026-11-19 | Tras revisar la carta: el **índice de categorías** es un carrusel de una sola fila que se desplaza lateralmente; una flecha indica que hay categorías ocultas a ese lado y, al tocarla, las muestra. |
+| 2026-11-19 | Tras revisar la carta: cuando el comensal ha bajado por la carta (por ejemplo, tras elegir una categoría), aparece un **botón fijo para volver arriba**. |
+| 2026-11-19 | Tras revisar la carta: **estilo visual más suave** (fondo gris claro, tarjetas blancas redondeadas, acento azul) con una jerarquía clara de textos y una cabecera que se distingue del contenido de la carta. El contraste ≥ 7:1 y los objetivos de 44×44 px se mantienen (regla 4). |
 | 2026-11-19 | Un plato pertenece a una sola categoría (si debe aparecer en dos, se duplica). Se permiten nombres de plato repetidos; no se permiten dos categorías activas con el mismo nombre. Un plato reactivado vuelve a su posición anterior en la categoría. |
 | 2026-11-19 | Editar un plato cambia lo que se ve en la carta desde ese momento. Que un pedido conserve el nombre, tamaño y precio que tenía al hacerse se decidirá en el cambio de pedidos (entrega pendiente para ese cambio). |
 
