@@ -147,8 +147,8 @@ describe('MenuPage', () => {
     expect(within(card).getByText('Pan de pueblo, tomate rallado y AOVE')).toBeInTheDocument();
     const photo = card.querySelector('img');
     expect(photo).toHaveAttribute('src', expect.stringContaining('dishes/tostada/foto.jpg'));
-    expect(photo).toHaveAttribute('width', '960');
-    expect(photo).toHaveAttribute('height', '720');
+    expect(photo).toHaveAttribute('width', '480');
+    expect(photo).toHaveAttribute('height', '360');
     expect(within(card).getByText('Gluten')).toBeInTheDocument();
   });
 

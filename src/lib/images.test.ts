@@ -52,11 +52,11 @@ describe('validateImage', () => {
 });
 
 describe('prepareImage', () => {
-  it('foto de plato válida → JPEG de 960 px como máximo', async () => {
+  it('foto de plato válida → JPEG de 480 px como máximo', async () => {
     const result = await prepareImage(fileOf(2 * MB, 'image/png'), 'dish');
     expect(result.error).toBeUndefined();
     expect(result.blob?.type).toBe('image/jpeg');
-    expect(drawn).toMatchObject({ width: 960, height: 720, type: 'image/jpeg', quality: 0.8 });
+    expect(drawn).toMatchObject({ width: 480, height: 360, type: 'image/jpeg', quality: 0.8 });
   });
 
   it('logo válido → PNG de 512 px como máximo', async () => {
@@ -67,9 +67,9 @@ describe('prepareImage', () => {
   });
 
   it('no amplía una imagen pequeña', async () => {
-    const file = Object.assign(fileOf(1000, 'image/jpeg'), { __w: 400, __h: 300 });
+    const file = Object.assign(fileOf(1000, 'image/jpeg'), { __w: 320, __h: 240 });
     await prepareImage(file, 'dish');
-    expect(drawn).toMatchObject({ width: 400, height: 300 });
+    expect(drawn).toMatchObject({ width: 320, height: 240 });
   });
 
   it('no redimensiona un archivo inválido', async () => {

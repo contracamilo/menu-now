@@ -17,7 +17,7 @@ export function DishCard({ dish, eagerPhoto = false }: Props) {
   const lines = priceLines(dish, lang);
 
   return (
-    <article className="dish" aria-labelledby={titleId}>
+    <article className={dish.photo_path ? 'dish dish--with-photo' : 'dish'} aria-labelledby={titleId}>
       <h3 id={titleId} className="dish__name">
         {dish.name}
       </h3>
@@ -58,8 +58,8 @@ export function DishCard({ dish, eagerPhoto = false }: Props) {
           className="dish__photo"
           src={publicImageUrl(dish.photo_path)}
           alt=""
-          width={960}
-          height={720}
+          width={480}
+          height={360}
           loading={eagerPhoto ? 'eager' : 'lazy'}
           decoding="async"
         />

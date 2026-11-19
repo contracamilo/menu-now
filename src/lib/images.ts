@@ -11,7 +11,7 @@ export type ImageKind = 'dish' | 'logo';
 export type ImageError = 'error.photoTooLarge' | 'error.photoType';
 
 const output: Record<ImageKind, { maxSide: number; type: string; quality?: number }> = {
-  dish: { maxSide: 960, type: 'image/jpeg', quality: 0.8 }, // JPEG: webp no está garantizado en Safari
+  dish: { maxSide: 480, type: 'image/jpeg', quality: 0.8 }, // miniatura en la carta; JPEG: webp no está garantizado en Safari
   logo: { maxSide: 512, type: 'image/png' }, // PNG: conserva la transparencia
 };
 
@@ -22,7 +22,7 @@ export function validateImage(file: File): ImageError | null {
   return null;
 }
 
-/** Redimensiona a un máximo de 960 px (plato, JPEG) o 512 px (logo, PNG) sin ampliar. */
+/** Redimensiona a un máximo de 480 px (plato, JPEG) o 512 px (logo, PNG) sin ampliar. */
 export async function resizeImage(file: File, kind: ImageKind): Promise<Blob> {
   const { maxSide, type, quality } = output[kind];
   const bitmap = await createImageBitmap(file);
