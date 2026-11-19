@@ -9,8 +9,6 @@
   align-items: center;
   gap: $space-2;
   margin-bottom: $space-4;
-  padding-bottom: $space-3;
-  border-bottom: $border-width solid $color-border;
 
   &__nav {
     display: flex;
@@ -23,7 +21,7 @@
   padding: $space-3;
   color: $color-text;
   background: $color-notice-background;
-  border: $border-width solid $color-border;
+  border-left: 0.35rem solid $color-notice-accent;
   border-radius: $radius;
 }
 
@@ -34,6 +32,8 @@
 
 // Formularios
 .form {
+  @include card;
+  padding: $space-4;
   display: flex;
   flex-direction: column;
   gap: $space-4;
@@ -75,8 +75,8 @@
   padding: $space-2 $space-3;
   font: inherit;
   color: $color-text;
-  background: $color-background;
-  border: $border-width solid $color-border;
+  background: $color-surface;
+  border: $border-width solid $color-control-border;
   border-radius: $radius;
 
   &[aria-invalid='true'] {
@@ -119,7 +119,7 @@
 .image-preview {
   display: block;
   max-width: 100%;
-  border: 1px solid $color-border;
+  border: 1px solid $color-divider;
   border-radius: $radius;
 
   &--logo {
@@ -139,9 +139,9 @@
 // Catálogo
 .catalog-category,
 .catalog-archived {
-  margin-top: $space-6;
-  padding-top: $space-3;
-  border-top: 3px solid $color-border;
+  @include card;
+  margin-top: $space-4;
+  padding: $space-4;
 }
 
 .catalog-category__header {
@@ -180,7 +180,7 @@
   justify-content: space-between;
   gap: $space-2;
   padding: $space-3 0;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid $color-divider;
 
   &__summary {
     flex: 1 1 12rem;
@@ -193,7 +193,8 @@
 
   &__prices {
     margin: 0;
-    color: $color-text-secondary;
+    font-weight: 600;
+    color: $color-accent;
   }
 }
 
@@ -209,7 +210,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: $space-2;
   padding: $space-3 0;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid $color-divider;
 
   @media (min-width: 30rem) {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);

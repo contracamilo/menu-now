@@ -1,25 +1,34 @@
-// Tokens de diseño (design D10). Los colores coinciden con tokens.ts (lo comprueba contrast.test.ts).
+// Tokens de diseño (design D10, estilo suave). Los colores coinciden con tokens.ts (lo comprueba contrast.test.ts).
 
-// Colores
-$color-text: #111111;
-$color-text-secondary: #333333;
-$color-background: #ffffff;
-$color-accent: #0b3d5c;
+// Colores (texto ≥ 7:1 sobre sus fondos)
+$color-text: #1c1c1e;
+$color-text-secondary: #48484a;
+$color-background: #f2f2f4;
+$color-surface: #ffffff;
+$color-accent: #0b4a99;
 $color-on-accent: #ffffff;
-$color-chip-background: #fff1c2;
-$color-notice-background: #ffe08a;
-$color-error: #8b0000;
-$color-success: #0b5323;
-$color-border: #111111;
+$color-accent-soft: #e8f0fb;
+$color-chip-background: #eef2f7;
+$color-notice-background: #fff4d6;
+$color-error: #a0141e;
+$color-success: #1d5e2c;
+$color-control-border: #7c7c80;
+
+// Decorativos (no llevan texto ni identifican controles)
+$color-divider: #e5e5ea;
+$color-notice-accent: #c58a00;
+$shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
 
 // Tipografía: base 18 px (html al 112,5 %) y todo en rem para respetar el zoom del sistema
 $font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 $font-size-base: 112.5%;
-$font-size-small: 0.9rem;
-$font-size-h1: 1.6rem;
+$font-size-small: 0.85rem;
+$font-size-label: 0.85rem;
+$font-size-h1: 1.75rem;
 $font-size-h2: 1.35rem;
 $font-size-h3: 1.1rem;
 $line-height: 1.5;
+$letter-spacing-label: 0.12em;
 
 // Espaciado
 $space-1: 0.25rem;
@@ -29,7 +38,8 @@ $space-4: 1rem;
 $space-5: 1.5rem;
 $space-6: 2rem;
 
-$radius: 0.5rem;
-$border-width: 2px;
+$radius: 0.75rem;
+$radius-card: 1rem;
+$border-width: 1.5px;
 $content-max-width: 40rem;
 $tap-target-min: 44px;

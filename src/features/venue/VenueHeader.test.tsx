@@ -13,6 +13,7 @@ describe('VenueHeader', () => {
     venue('Bar Manolo', 'venue/logo-1.png');
     renderWithProviders(<VenueHeader />, { zone: 'menu' });
     expect(await screen.findByRole('heading', { level: 1, name: 'Bar Manolo' })).toBeInTheDocument();
+    expect(screen.getByText('Menu')).toHaveClass('venue-header__subtitle');
     const logo = screen.getByRole('img', { name: 'Bar Manolo' });
     expect(logo).toHaveAttribute('src', expect.stringContaining('venue/logo-1.png'));
   });
@@ -28,6 +29,7 @@ describe('VenueHeader', () => {
     venue(null, null);
     renderWithProviders(<VenueHeader />, { zone: 'menu' });
     expect(await screen.findByRole('heading', { level: 1, name: 'Menu' })).toBeInTheDocument();
+    expect(document.querySelector('.venue-header__subtitle')).toBeNull();
   });
 
   it('si falla la petición del local, usa el título genérico', async () => {

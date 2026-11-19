@@ -1,27 +1,24 @@
 @use 'tokens' as *;
 @use 'mixins' as *;
 
-// Carta del comensal: alto contraste, texto grande y objetivos de 44 px (design D10)
+// Carta del comensal: estilo suave, jerarquía clara, contraste ≥ 7:1 y objetivos de 44 px (design D10)
 
-.menu-page .venue-header {
-  flex-wrap: wrap;
-
-  .lang-switcher {
-    margin-left: auto;
-  }
+.menu-page .venue-header .lang-switcher {
+  margin-left: auto;
 }
 
 .allergy-notice {
+  margin: 0 0 $space-4;
   padding: $space-3 $space-4;
   font-weight: 600;
   color: $color-text;
   background: $color-notice-background;
-  border: $border-width solid $color-border;
+  border-left: 0.35rem solid $color-notice-accent;
   border-radius: $radius;
 }
 
 .menu-index {
-  margin: $space-4 0;
+  margin: 0 0 $space-3;
 
   ul {
     display: flex;
@@ -33,25 +30,33 @@
   }
 
   &__link {
-    padding: $space-1 $space-3;
+    padding: $space-1 $space-4;
     font-weight: 600;
-    border: $border-width solid $color-accent;
-    border-radius: $radius;
+    white-space: nowrap;
+    background: $color-surface;
+    border: $border-width solid $color-control-border;
+    border-radius: 999px;
     text-decoration: none;
+
+    &:active {
+      background: $color-accent-soft;
+    }
   }
 }
 
 .vat-note {
-  color: $color-text-secondary;
+  @include label;
+  margin: 0 0 $space-4;
 }
 
 .menu-category {
-  margin-top: $space-6;
+  @include card;
+  margin-bottom: $space-4;
+  padding: $space-4;
 
   &__title {
     scroll-margin-top: $space-4;
-    padding-bottom: $space-2;
-    border-bottom: 3px solid $color-border;
+    margin-bottom: $space-1;
   }
 }
 
@@ -60,7 +65,12 @@
   flex-direction: column;
   gap: $space-2;
   padding: $space-4 0;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid $color-divider;
+
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
 
   &__name {
     margin: 0;
@@ -71,11 +81,13 @@
     padding: 0;
     list-style: none;
     font-weight: 700;
+    color: $color-accent;
   }
 
   &__included {
     margin: 0;
     font-weight: 700;
+    color: $color-accent;
   }
 
   &__description {
@@ -83,10 +95,15 @@
     color: $color-text-secondary;
   }
 
-  &__allergens-label,
+  &__allergens-label {
+    @include label;
+    margin: 0;
+  }
+
   &__no-allergens {
     margin: 0;
-    font-weight: 600;
+    font-size: 0.95rem;
+    color: $color-text-secondary;
   }
 
   // Con foto: miniatura a la derecha del texto (design D6); el texto sigue en el orden de lectura
@@ -95,6 +112,7 @@
     grid-template-columns: minmax(0, 1fr) 6rem;
     align-items: start;
     column-gap: $space-3;
+    row-gap: $space-2;
 
     > * {
       grid-column: 1;
@@ -122,9 +140,9 @@
 }
 
 .allergen-chip {
-  padding: $space-1 $space-3;
+  padding: 0.1rem $space-3;
+  font-size: 0.95rem;
   color: $color-text;
   background: $color-chip-background;
-  border: 1px solid $color-border;
   border-radius: 999px;
 }

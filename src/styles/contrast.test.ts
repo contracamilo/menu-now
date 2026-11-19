@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { colors, contrastPairs } from './tokens';
+import { colors, contrastPairs, nonTextPairs } from './tokens';
 
 // Contraste WCAG 2.x: (L1 + 0,05) / (L2 + 0,05) con luminancia relativa sRGB
 function luminance(hex: string): number {
@@ -23,6 +23,10 @@ describe('contraste de los tokens de color', () => {
 
   it.each(Object.entries(contrastPairs))('el par «%s» llega a 7:1', (_name, [fg, bg]) => {
     expect(contrastRatio(colors[fg], colors[bg])).toBeGreaterThanOrEqual(7);
+  });
+
+  it.each(Object.entries(nonTextPairs))('el borde «%s» llega a 3:1', (_name, [fg, bg]) => {
+    expect(contrastRatio(colors[fg], colors[bg])).toBeGreaterThanOrEqual(3);
   });
 
   it('tokens.scss declara exactamente los mismos colores que tokens.ts', () => {

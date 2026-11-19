@@ -16,6 +16,8 @@ export function VenueHeader({ asHeading = true, children }: Props) {
   const name = data?.name ?? null;
   const title = name ?? t('menu.title');
   const Title = asHeading ? 'h1' : 'p';
+  // En la carta, bajo el nombre del local, una etiqueta en versalitas («Carta» / «Menu»)
+  const subtitle = asHeading && name ? t('menu.title') : null;
 
   return (
     <header className="venue-header">
@@ -30,7 +32,10 @@ export function VenueHeader({ asHeading = true, children }: Props) {
           decoding="async"
         />
       )}
-      <Title className="venue-header__name">{title}</Title>
+      <div className="venue-header__text">
+        <Title className="venue-header__name">{title}</Title>
+        {subtitle && <p className="venue-header__subtitle">{subtitle}</p>}
+      </div>
       {children}
     </header>
   );

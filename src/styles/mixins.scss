@@ -13,3 +13,19 @@
   outline: 3px solid $color-accent;
   outline-offset: 2px;
 }
+
+// Tarjeta del estilo suave: superficie blanca, esquinas redondeadas y sombra ligera
+@mixin card {
+  background: $color-surface;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+}
+
+// Etiqueta auxiliar en versalitas espaciadas
+@mixin label {
+  font-size: $font-size-label;
+  font-weight: 600;
+  letter-spacing: $letter-spacing-label;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
