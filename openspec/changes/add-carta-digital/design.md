@@ -88,6 +88,7 @@ create table public.categories (
   constraint categories_name_rule check (
     (is_included and name is null)
     or (not is_included
+        and name is not null
         and char_length(btrim(name)) between 1 and 40
         and lower(btrim(name)) not in ('incluidos', 'included'))),
   constraint categories_included_never_archived check (not (is_included and archived_at is not null))
@@ -138,6 +139,7 @@ create unique index dish_sizes_label_unique on public.dish_sizes (dish_id, lower
 - **«Incluidos»**: una única fila con `is_included = true`, creada por la migración, sin nombre (la UI muestra `category.included`: «Incluidos» / «Included»), no archivable y con posición editable como cualquier otra.
 - **Archivado = `archived_at` no nulo.** No hay borrado (D3). Reactivar solo pone `archived_at` a nulo: la `position` se conserva, así que el elemento vuelve a su sitio (spec «El dueño reactiva un plato archivado»).
 - **Posición:** entero por ámbito (categorías globales; platos por categoría; tamaños por plato). Un trigger `before insert` asigna `max(position)+1` si llega nulo, y un trigger `before update of category_id` coloca el plato al final de la nueva categoría. Las posiciones pueden tener huecos; solo importa el orden relativo.
+- `name is not null` en `categories_name_rule`: sin él, una categoría normal con nombre nulo pasaría el `check` (un `check` solo falla con `false`, no con `null`).
 - Límites de longitud (categoría 40, plato 80, descripción 160, «incluido con» 60, tamaño 20, local 60 caracteres): decisión técnica para que la carta se lea bien en el móvil; la interfaz muestra el contador.
 
 ### D3. RLS y permisos
@@ -188,9 +190,12 @@ create policy "owner update categories" on public.categories
 -- dish_sizes: select/insert/update/delete para el dueño (los tamaños se sustituyen al editar)
 
 -- Sin políticas DELETE en categorías ni platos: nadie puede borrarlos.
-revoke delete on public.categories, public.dishes, public.venue_settings from anon, authenticated;
-revoke insert, update, delete on public.categories, public.dishes, public.dish_sizes,
+-- (TRUNCATE no pasa por RLS: se retira también.)
+revoke delete, truncate on public.categories, public.dishes, public.venue_settings from anon, authenticated;
+revoke insert, update, delete, truncate on public.categories, public.dishes, public.dish_sizes,
   public.venue_settings from anon;
+revoke truncate on public.dish_sizes from authenticated;
+revoke insert, update, delete, truncate on public.backoffice_users from anon, authenticated;
 ```
 
 - Las políticas permisivas se combinan con OR: el dueño ve también lo archivado; `anon` solo lo activo. **La consulta de la carta filtra igualmente `archived_at is null`** en categorías y platos, para que un dueño con sesión abierta vea en `/` exactamente lo mismo que un comensal.
@@ -209,8 +214,10 @@ create function public.move_category(p_id uuid, p_direction integer)
 returns void language plpgsql security invoker set search_path = '' as $$ ... $$;
 ```
 
+- `save_dish` recibe el `id` del plato: si existe lo actualiza y, si no, lo crea con ese `id`. Un plato nuevo recibe su `id` en el cliente (`crypto.randomUUID()`) para poder subir la foto a `dishes/<id>/…` antes de guardar, y guardarlo todo en una sola llamada.
 - `save_dish` inserta o actualiza la fila de `dishes`, borra los tamaños que ya no vienen, actualiza o inserta el resto con su `position` y devuelve el id. El *constraint trigger* de D2 valida la regla de precios al final, así que un plato nunca queda guardado a medias. Al ser `security invoker`, RLS sigue aplicando.
 - Al mover un plato a «Incluidos» el formulario deja de enviar tamaños y envía `included_with`; al sacarlo, al revés. La base de datos rechaza cualquier combinación inválida.
+- `save_dish`, `move_dish` y `move_category` no se pueden ejecutar como `anon` (`revoke execute`); un autenticado que no es dueño puede llamarlas, pero RLS hace que no cambien nada.
 - `move_*` buscan el vecino **activo** más cercano en la dirección indicada (mismo `category_id` en platos) e intercambian ambas `position`; si no hay vecino, no hacen nada.
 - Alternativas descartadas: arrastrar y soltar (requiere librería, difícil con lector de pantalla y con el pulgar; viola la regla 1) o escribir plato y tamaños con varias peticiones desde el cliente (riesgo de estados intermedios inválidos).
 - Nota para el cambio de pedidos: hoy, quitar un tamaño lo borra. Si los pedidos referencian tamaños, ese cambio decidirá entre copiar nombre y precio en el pedido o archivar tamaños (proposal, decisión del 2026-11-19).
@@ -227,7 +234,7 @@ returns void language plpgsql security invoker set search_path = '' as $$ ... $$
 
 ### D6. Carga y presentación de la carta
 
-- Dos peticiones en paralelo vía `supabase-js` (PostgREST):
+- Dos peticiones anónimas en paralelo a PostgREST con `fetch` directo (`src/lib/rest.ts`, cabecera `apikey`), sin `supabase-js`: se aplicó desde el principio la «primera palanca» de Risks, porque con el SDK el JS inicial de `/` llegaba a 153 KB gzip (presupuesto: 150). `supabase-js` solo se carga en el chunk de la administración. Las URL públicas de las imágenes también se construyen en `rest.ts`.
   - catálogo: `categories?select=id,is_included,name,position,dishes(id,name,description,included_with,photo_path,allergens,no_allergens,position,dish_sizes(id,label,price_cents,position))&archived_at=is.null&dishes.archived_at=is.null&order=position&dishes.order=position&dishes.dish_sizes.order=position`;
   - local: `venue_settings?select=name,logo_path` (una fila).
 - La función pura `visibleCategories` descarta las categorías sin platos (también «Incluidos») y resuelve el nombre de «Incluidos» con `t('category.included')`. Si no queda ninguna → estado «carta no disponible» (sin índice). Si falla la petición del catálogo → estado de error con «Reintentar» (`refetch`). Si falla solo la del local, la cabecera usa el título genérico.
@@ -246,7 +253,7 @@ returns void language plpgsql security invoker set search_path = '' as $$ ... $$
 | Red | Throttling simulado por defecto de Lighthouse: RTT 150 ms, 1,6 Mbps bajada, 750 Kbps subida (perfil «4G lento»; más exigente que un 4G típico, a propósito) |
 | Caché | Fría (primera visita) |
 | Build | Producción (`vite build` + `vite preview`) contra Supabase local |
-| Carta de referencia | `supabase/seed.sql`: local con nombre y logo, 8 categorías más «Incluidos» (2 platos), 60 platos activos (40 con foto ya redimensionada, 15 con 2–3 tamaños), 10 platos archivados |
+| Carta de referencia | `supabase/seed.sql` (imágenes en `supabase/seed-images/`, subidas por `npm run db:seed-images`): local con nombre y logo, 8 categorías más «Incluidos» (2 platos), 60 platos activos (40 con foto ya redimensionada, 15 con 2–3 tamaños), 10 platos archivados |
 | Métrica y umbral | **Largest Contentful Paint < 2 000 ms** |
 | Presupuesto auxiliar | JS inicial de la ruta `/` ≤ 150 KB gzip (aserción `resource-summary:script:size` de LHCI) |
 
@@ -354,12 +361,13 @@ returns void language plpgsql security invoker set search_path = '' as $$ ... $$
 | `error.photoType` | Formato no admitido. Usa una imagen JPEG, PNG o WebP. | Unsupported format. Use a JPEG, PNG or WebP image. |
 | `error.passwordShort` | La contraseña debe tener al menos 8 caracteres. | The password must be at least 8 characters long. |
 | `common.notFound` | Esta página no existe. | This page doesn't exist. |
+| `common.loadError` | No se han podido cargar los datos. | We couldn't load the data. |
 
 ### D9. Sesión y cuentas de dueño (Supabase Auth)
 
 - Correo + contraseña con `supabase.auth.signInWithPassword`. Cualquier error de credenciales se muestra con `auth.invalid` (no se distingue «correo inexistente»).
 - Guardia `RequireOwner` en las rutas de dueño: sin sesión → redirige a `/admin/login?next=<ruta>`; con sesión pero sin fila `owner` en `backoffice_users` → cierra sesión y muestra `auth.notOwner`. Tras el login se navega a `next` (solo rutas internas que empiecen por `/admin`, para evitar redirecciones abiertas). La garantía real está en RLS (D3).
-- **Restablecimiento**: `/admin/forgot-password` llama a `supabase.auth.resetPasswordForEmail(email, { redirectTo: <origen>/admin/reset-password })` y muestra siempre `auth.resetSent`, haya error de «usuario no encontrado» o no (Supabase no envía correo a direcciones sin cuenta). `/admin/reset-password` espera el evento `PASSWORD_RECOVERY` de la sesión de recuperación, valida ≥ 8 caracteres en cliente y llama a `supabase.auth.updateUser({ password })`; sin sesión de recuperación válida (enlace caducado o usado) muestra `auth.resetInvalid`. Caducidad del enlace: la de Supabase (1 h por defecto); un solo uso: garantizado por Supabase.
+- **Restablecimiento**: `/admin/forgot-password` llama a `supabase.auth.resetPasswordForEmail(email, { redirectTo: <origen>/admin/reset-password })` y muestra siempre `auth.resetSent`, haya error de «usuario no encontrado» o no (Supabase no envía correo a direcciones sin cuenta). `/admin/reset-password` acepta la sesión de recuperación que crea `supabase-js` al abrir el enlace (no se exige ver el evento `PASSWORD_RECOVERY`, porque `supabase-js` puede emitirlo antes de que la página se suscriba; una sesión normal no da más poder, ya que también puede llamar a `updateUser`), valida ≥ 8 caracteres en cliente y llama a `supabase.auth.updateUser({ password })`; sin sesión de recuperación válida (enlace caducado o usado) muestra `auth.resetInvalid`. Caducidad del enlace: la de Supabase (1 h por defecto); un solo uso: garantizado por Supabase.
 - Longitud mínima 8: `minimum_password_length = 8` en `supabase/config.toml` y en la configuración de Auth de cada instancia.
 - **Varios dueños**: cada dueño es un usuario de Auth con su fila en `backoffice_users`; no hay pantalla para gestionarlos en este cambio.
 - Registro público desactivado: `enable_signup = false` en `supabase/config.toml` (local) y en la configuración de Auth de cada instancia (acción manual). La interfaz no tiene ningún enlace de registro.
