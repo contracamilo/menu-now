@@ -189,6 +189,13 @@ export class FakeSupabase {
     return result.data;
   }
 
+  /** Equivalente falso de `restRpc` (lib/rest.ts): lanza si el handler devuelve error (como un HTTP no 2xx). */
+  async restRpc(name: string, args: Record<string, unknown> = {}) {
+    const result = await this.rpc(name, args);
+    if (result.error) throw new Error(result.error.message);
+    return result.data;
+  }
+
   async rpc(name: string, args: Record<string, unknown> = {}) {
     this.rpcCalls.push({ name, args });
     const handler = this.rpcs[name];

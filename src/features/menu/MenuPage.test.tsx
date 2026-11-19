@@ -126,6 +126,16 @@ describe('MenuPage', () => {
     );
   });
 
+  it('[menu] «El comensal abre la carta desde la dirección general» / [table-ordering] «… desde la dirección general»', async () => {
+    serve();
+    renderMenu('es');
+    expect(await screen.findByRole('heading', { level: 2, name: 'Desayunos' })).toBeInTheDocument();
+    expect(screen.getByText('Para pedir, escanea el código QR de tu mesa.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Añadir/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Mesa:/)).not.toBeInTheDocument();
+    expect(fakeSupabase.calls.some((c) => c.table === 'rpc/get_table')).toBe(false);
+  });
+
   it('[menu] «El comensal salta a una categoría desde el índice»', async () => {
     serve();
     renderMenu();

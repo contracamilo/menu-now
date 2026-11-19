@@ -7,10 +7,12 @@ interface Props {
   /** En la carta el nombre es el `h1`; en la administración cada pantalla tiene su propio título. */
   asHeading?: boolean;
   children?: ReactNode;
+  /** Línea adicional bajo el nombre (la mesa del QR). */
+  detail?: ReactNode;
 }
 
 /** Cabecera con el logo y el nombre del local, compartida por la carta y la administración. */
-export function VenueHeader({ asHeading = true, children }: Props) {
+export function VenueHeader({ asHeading = true, children, detail }: Props) {
   const t = useT();
   const { data } = useVenue(); // si falla, se usa el título genérico
   const name = data?.name ?? null;
@@ -38,6 +40,7 @@ export function VenueHeader({ asHeading = true, children }: Props) {
           {title}
         </Title>
         {subtitle && <p className="venue-header__subtitle">{subtitle}</p>}
+        {detail}
       </div>
       {children}
     </header>

@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useT } from '../../i18n/useT';
+import type { Dish } from '../../lib/types';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { VenueHeader } from '../venue/VenueHeader';
 import { BackToTop } from './BackToTop';
@@ -10,8 +11,21 @@ import { useMenu } from './useMenu';
 import { visibleCategories } from './visibleCategories';
 import '../../styles/menu.scss';
 
-/** Carta pública del comensal (spec menu, design D6 y D10). */
-export function MenuPage() {
+interface Props {
+  /** Bajo el nombre del local: la mesa del QR (design D6 de add-pedidos-mesa). */
+  headerDetail?: ReactNode;
+  /** Junto al selector de idioma (p. ej. «Mis pedidos»). */
+  headerActions?: ReactNode;
+  /** Aviso sobre pedir. Por defecto, el de la carta general: «escanea el QR de tu mesa». */
+  notice?: ReactNode;
+  /** Acción de cada plato (botón «Añadir» en la carta de una mesa activa). */
+  renderDishAction?: (dish: Dish) => ReactNode;
+  /** Contenido fijo al pie (barra del pedido) y región viva. */
+  footer?: ReactNode;
+}
+
+/** Carta pública del comensal (spec menu, design D6 y D10), general o de una mesa (spec table-ordering). */
+export function MenuPage({ headerDetail, headerActions, notice, renderDishAction, footer }: Props) {
   const t = useT();
   const menu = useMenu();
   const categories = useMemo(() => visibleCategories(menu.data ?? [], t), [menu.data, t]);
@@ -71,7 +85,13 @@ export function MenuPage() {
               {category.name}
             </h2>
             {category.dishes.map((dish) => (
-              <DishCard key={dish.id} dish={dish} showPhoto={showPhotos} eagerPhoto={eagerIds.has(dish.id)} />
+              <DishCard
+                key={dish.id}
+                dish={dish}
+                showPhoto={showPhotos}
+                eagerPhoto={eagerIds.has(dish.id)}
+                action={renderDishAction?.(dish)}
+              />
             ))}
           </section>
         ))}
@@ -81,11 +101,14 @@ export function MenuPage() {
 
   return (
     <main className="page menu-page">
-      <VenueHeader>
+      <VenueHeader detail={headerDetail}>
+        {headerActions}
         <LanguageSwitcher />
       </VenueHeader>
+      {notice === undefined ? <p className="order-notice">{t('table.scanToOrder')}</p> : notice}
       {content}
       <BackToTop />
+      {footer}
     </main>
   );
 }

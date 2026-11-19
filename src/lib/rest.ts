@@ -17,3 +17,14 @@ export async function restGet<T>(table: string, params: Record<string, string>):
 export function publicImageUrl(path: string): string {
   return `${baseUrl}/storage/v1/object/public/images/${path.split('/').map(encodeURIComponent).join('/')}`;
 }
+
+/** POST anónimo a una función de PostgREST (`/rest/v1/rpc/<fn>`), p. ej. `place_order` (design D3). */
+export async function restRpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { apikey: anonKey, Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as T;
+}

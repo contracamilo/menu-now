@@ -19,6 +19,7 @@ vi.mock('../lib/rest', async () => {
   const { fakeSupabase } = await import('./fakeSupabase');
   return {
     restGet: (table: string, params: Record<string, string>) => fakeSupabase.restGet(table, params),
+    restRpc: (fn: string, args: Record<string, unknown>) => fakeSupabase.restRpc(fn, args),
     publicImageUrl: (path: string) => `https://fake.supabase.test/storage/v1/object/public/images/${path}`,
   };
 });
