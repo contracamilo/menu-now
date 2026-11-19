@@ -13,11 +13,12 @@ Requisitos: `[catalog-management] «El dueño gestiona el catálogo desde su mó
 | Auditoría Lighthouse de accesibilidad de la carta (axe, incluye contraste AA y `target-size`) | `npm run perf` | ✅ puntuación 1 |
 | Sin desplazamiento horizontal y controles ≥ 44×44 CSS px a 360 px de ancho | Playwright (viewport 360×740, DPR 2, táctil), build de producción contra Supabase local con el seed | ✅ ver tabla |
 
-### Medición a 360 px (2026-11-19)
+### Medición a 360 px (2026-11-19, tras el estilo suave, el carrusel y «Volver arriba»)
 
 | Pantalla | Desbordamiento horizontal | Controles medidos | Controles < 44×44 px | Errores de consola |
 | --- | --- | --- | --- | --- |
-| `/` (carta) | 0 px | 11 | 0 | 0 |
+| `/` (carta, arriba: índice con flecha) | 0 px | 12 | 0 | 0 |
+| `/` (carta, abajo: «Volver arriba») | 0 px | 13 | 0 | 0 |
 | `/admin/login` | 0 px | 6 | 0 | 0 |
 | `/admin/forgot-password` | 0 px | 5 | 0 | 0 |
 | `/admin/reset-password` (enlace no válido) | 0 px | 3 | 0 | 0 |
@@ -27,7 +28,7 @@ Requisitos: `[catalog-management] «El dueño gestiona el catálogo desde su mó
 | `/admin/dishes/new` | 0 px | 29 | 0 | 0 |
 | `/admin/dishes/:id` (Croquetas, 3 tamaños) | 0 px | 42 | 0 | 0 |
 
-Se miden botones, enlaces, `select`, campos de texto, casillas (su `label`) y el botón de elegir imagen.
+Se miden botones (incluidas las flechas del índice y «Volver arriba»), enlaces, `select`, campos de texto, casillas (su `label`) y el botón de elegir imagen.
 
 ## Revisión manual pendiente
 
@@ -50,6 +51,7 @@ Dispositivo / lector / fecha: _pendiente_
 Dispositivo / lector / fecha: _pendiente_
 
 - [ ] Contraste ≥ 7:1 legible en pantalla real a pleno sol (brillo automático).
-- [ ] Objetivos táctiles ≥ 44×44 px medidos en DevTools (selector de idioma, enlaces del índice, «Reintentar»).
+- [ ] Objetivos táctiles ≥ 44×44 px medidos en DevTools (selector de idioma, enlaces y flechas del índice, «Volver arriba», «Reintentar»).
+- [ ] El índice en carrusel se desliza bien con el dedo y las flechas se entienden; «Volver arriba» no tapa contenido importante.
 - [ ] El índice y el aviso de alergias se leen bien a 360 px.
 - [ ] Con lector: el índice se anuncia como navegación, cada categoría como encabezado y cada plato con nombre, tamaños y precios (o «incluido con»), descripción y alérgenos.
