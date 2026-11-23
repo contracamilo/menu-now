@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { storageKey } from '../../i18n/I18nProvider';
@@ -7,6 +8,8 @@ import { fakeSupabase, ok } from '../../test/fakeSupabase';
 import { serveTableMenu, TOKEN } from '../../test/fakeMenu';
 import { renderWithProviders, testQueryClient } from '../../test/render';
 import { TableApp } from './TableApp';
+
+const plain = (s: string | null) => (s ?? '').replace(/[\u00a0\u202f]/g, ' ');
 
 const order = (n: number): PlacedOrder => ({
   id: `aaaaaaaa-0000-4000-8000-00000000000${n}`,
@@ -36,13 +39,21 @@ function renderMine(storedIds: string[], queryClient = testQueryClient()) {
 }
 
 describe('MyOrdersPage', () => {
-  it('[table-ordering] «El comensal consulta sus pedidos»', async () => {
+  it('[table-ordering] «El comensal consulta sus pedidos»: hora, total y estado en la lista; líneas al abrir uno', async () => {
     serveOrders([order(8), order(3)]);
     renderMine([order(8).id, order(3).id]);
     const links = await screen.findAllByRole('link', { name: /Pedido nº/ });
     expect(links.map((l) => l.querySelector('.order-card__number')!.textContent)).toEqual(['Pedido nº 8', 'Pedido nº 3']);
-    expect(links[0]).toHaveTextContent('Estado: Recibido');
+    expect(links[1]).toHaveTextContent(/Hecho a las \d{2}:\d{2}/);
+    expect(plain(links[1].textContent)).toContain('5,40 €');
+    expect(links[1]).toHaveTextContent('Estado: Recibido');
     expect(links[1]).toHaveAttribute('href', `/t/${TOKEN}/orders/${order(3).id}`);
+
+    await userEvent.setup().click(links[1]);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pedido nº 3' })).toBeInTheDocument();
+    expect(plain(screen.getByText(/3 × Caña/).textContent)).toBe('3 × Caña');
+    expect(plain(document.querySelector('.order-total strong')!.textContent)).toBe('5,40 €');
+    expect(screen.getByText('Estado: Recibido')).toBeInTheDocument();
   });
 
   it('[table-ordering] «El comensal no ve los pedidos de otro móvil»: solo pide los id de este móvil', async () => {

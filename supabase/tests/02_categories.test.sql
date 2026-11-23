@@ -1,6 +1,6 @@
 -- Categorías y la categoría del sistema «Incluidos» (design D2).
 begin;
-select plan(13);
+select plan(14);
 
 select is((select count(*)::int from public.categories where is_included), 1,
   'existe exactamente una categoría «Incluidos» tras la migración');
@@ -29,6 +29,11 @@ select throws_ok($$ insert into public.categories (name) values ('') $$,
 select throws_ok($$ insert into public.categories (name) values (null) $$,
   '23514', null, 'nombre nulo en una categoría normal → rechazado');
 
+-- [catalog-management] «Intento de guardar un nombre demasiado largo fuera de la interfaz»
+-- (la regla es de la tabla: vale igual para la sesión de dueño que para cualquier otra vía)
+select throws_ok($$ insert into public.categories (name) values (repeat('x', 41)) $$,
+  '23514', null, 'nombre de 41 caracteres → rechazado');
+
 select throws_ok($$ insert into public.categories (name) values (' Incluidos ') $$,
   '23514', null, '«Incluidos» como nombre → rechazado');
 
@@ -45,7 +50,7 @@ select lives_ok($$ insert into public.categories (name) values ('Pruebas Bebidas
 
 select throws_ok($$ update public.categories set archived_at = null
                      where id = '00000000-0000-0000-0000-0000000000c1' $$,
-  '23505', null, 'no se puede reactivar una categoría si ya hay otra activa con su nombre');
+  '23505', null, '[catalog-management] «El dueño intenta reactivar una categoría con nombre repetido»: no se reactiva');
 
 select * from finish();
 rollback;

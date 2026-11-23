@@ -52,8 +52,17 @@ describe('Volver arriba', () => {
     renderWithProviders(<MenuPage />, { zone: 'menu' });
     await screen.findByRole('heading', { level: 2, name: 'Bebidas' });
     expect(backToTop()).not.toBeInTheDocument();
-    scrollPageTo(300); // un poco, sin llegar a una pantalla
+  });
+
+  it('[menu] «El comensal baja menos de una pantalla»: sigue sin botón', async () => {
+    renderWithProviders(<MenuPage />, { zone: 'menu' });
+    await screen.findByRole('heading', { level: 2, name: 'Bebidas' });
+    scrollPageTo(300); // un poco, sin llegar a una pantalla (800 px)
     expect(backToTop()).not.toBeInTheDocument();
+    scrollPageTo(800); // justo una pantalla: todavía no
+    expect(backToTop()).not.toBeInTheDocument();
+    scrollPageTo(801); // más de una pantalla
+    expect(backToTop()).toBeInTheDocument();
   });
 
   it('[menu] «El comensal vuelve arriba tras elegir una categoría»', async () => {

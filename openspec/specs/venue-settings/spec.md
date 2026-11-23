@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Los datos propios del local que edita el dueño desde la administración —en este cambio, su nombre y su logo— y que identifican el local en la carta del comensal y en la administración.
+Los datos propios del local que edita el dueño desde la administración —su nombre y su logo— y que identifican el local en la carta del comensal y en la administración.
 
 ## Requirements
 

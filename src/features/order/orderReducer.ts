@@ -2,6 +2,16 @@ import type { DraftLine, PriceChange, UnavailableLine } from '../../lib/types';
 
 export const MAX_QUANTITY = 20;
 export const NOTE_MAX = 140;
+/** Líneas como máximo por pedido (spec table-ordering «Máximo de líneas por pedido»). */
+export const MAX_LINES = 50;
+
+/** Línea sin nota del mismo plato y tamaño, a la que se suman las unidades al añadir. */
+const findMergeable = (lines: DraftLine[], dishId: string, sizeId: string) =>
+  lines.find((l) => l.dish_id === dishId && l.size_id === sizeId && !l.note);
+
+/** ¿Añadir este plato y tamaño crearía una línea nueva por encima del máximo? */
+export const wouldExceedLines = (lines: DraftLine[], dishId: string, sizeId: string) =>
+  lines.length >= MAX_LINES && !findMergeable(lines, dishId, sizeId);
 
 /**
  * Pedido sin confirmar (design D7). `orderId` identifica el intento de envío para que el servidor
@@ -33,11 +43,12 @@ export function orderReducer(state: DraftOrder, action: OrderAction): DraftOrder
     case 'add': {
       const { line } = action;
       // Mismo plato y tamaño sin nota: suma una unidad; si no, una línea nueva
-      const existing = state.lines.find((l) => l.dish_id === line.dish_id && l.size_id === line.size_id && !l.note);
+      const existing = findMergeable(state.lines, line.dish_id, line.size_id);
       if (existing) {
         if (existing.quantity >= MAX_QUANTITY) return state;
         return withLines(state.lines.map((l) => (l === existing ? { ...l, quantity: l.quantity + 1 } : l)));
       }
+      if (state.lines.length >= MAX_LINES) return state;
       return withLines([...state.lines, { ...line, quantity: 1, note: '' }]);
     }
     case 'setQuantity':

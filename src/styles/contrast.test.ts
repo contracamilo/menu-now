@@ -15,7 +15,8 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// [menu] «El comensal lee y toca la carta a pleno sol» (tokens; la revisión en pantalla real está en docs/a11y-review.md)
+// [menu] «El comensal lee y toca la carta a pleno sol» y [table-ordering] «El comensal pide a pleno sol»
+// (tokens compartidos por la carta y las pantallas del pedido; la revisión en pantalla real está en docs/a11y-review.md)
 describe('contraste de los tokens de color', () => {
   it('calcula bien el contraste de referencia (negro sobre blanco = 21:1)', () => {
     expect(contrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);

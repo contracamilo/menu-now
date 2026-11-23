@@ -1,5 +1,5 @@
 -- add-panel-cocina: cuentas de personal, ciclo de estados del pedido, lectura del panel y Realtime.
--- Ver openspec/changes/add-panel-cocina/design.md (D2–D5).
+-- Ver openspec/changes/archive/2026-11-19-add-panel-cocina/design.md (D2–D5).
 
 ------------------------------------------------------------------------------
 -- D2. Rol de personal, marcas de tiempo por estado

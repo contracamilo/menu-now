@@ -6,6 +6,13 @@ import { useOrders } from './orderApi';
 import { useOrder } from './OrderProvider';
 import { PlacedOrderView } from './PlacedOrderView';
 
+/** Texto de ayuda según el estado actual del pedido (un pedido servido no lleva). */
+const helpKey = {
+  received: 'order.receivedHelp',
+  in_preparation: 'order.preparingHelp',
+  cancelled: 'order.cancelledHelp',
+} as const;
+
 /** Confirmación y detalle de un pedido: número, mesa, líneas, total y estado (spec «Número y estado del pedido»). */
 export default function OrderDetailPage() {
   const t = useT();
@@ -39,9 +46,7 @@ export default function OrderDetailPage() {
           {t('order.number', { number: order.number })}
         </h1>
         <PlacedOrderView order={order} />
-        {order.status !== 'served' && (
-          <p className="order-help">{t(order.status === 'cancelled' ? 'order.cancelledHelp' : 'order.receivedHelp')}</p>
-        )}
+        {order.status !== 'served' && <p className="order-help">{t(helpKey[order.status])}</p>}
       </>
     );
   }

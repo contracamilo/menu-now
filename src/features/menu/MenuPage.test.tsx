@@ -130,7 +130,7 @@ describe('MenuPage', () => {
     serve();
     renderMenu('es');
     expect(await screen.findByRole('heading', { level: 2, name: 'Desayunos' })).toBeInTheDocument();
-    expect(screen.getByText('Para pedir, escanea el código QR de tu mesa.')).toBeInTheDocument();
+    expect(screen.getByText('Para pedir, escanea el código QR de tu mesa o pregunta al personal.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Añadir/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/^Mesa:/)).not.toBeInTheDocument();
     expect(fakeSupabase.calls.some((c) => c.table === 'rpc/get_table')).toBe(false);

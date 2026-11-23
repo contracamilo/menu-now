@@ -3,7 +3,7 @@ import { useI18n } from '../../i18n/useT';
 import { formatPrice } from '../../lib/money';
 import type { Dish, DishSize } from '../../lib/types';
 import { useOrder } from './OrderProvider';
-import { MAX_QUANTITY, orderTotal } from './orderReducer';
+import { MAX_QUANTITY, orderTotal, wouldExceedLines } from './orderReducer';
 
 /**
  * Botón «Añadir» de un plato con precio (spec table-ordering «Añadir platos al pedido», design D8).
@@ -19,6 +19,11 @@ export function AddToOrder({ dish }: { dish: Dish }) {
   const sizes = [...dish.dish_sizes].sort((a, b) => a.position - b.position);
 
   function addSize(size: DishSize) {
+    if (wouldExceedLines(draft.lines, dish.id, size.id)) {
+      announce(t('order.maxLines'));
+      closeDialog();
+      return;
+    }
     const existing = draft.lines.find((l) => l.dish_id === dish.id && l.size_id === size.id && !l.note);
     const added = !existing || existing.quantity < MAX_QUANTITY;
     add({ dish_id: dish.id, size_id: size.id, dish_name: dish.name, size_label: size.label, unit_price_cents: size.price_cents });

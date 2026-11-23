@@ -5,9 +5,10 @@
 -- empieza a preparar un pedido», «El pedido sale a la mesa», «Intento de saltar o retroceder un
 -- estado fuera de la interfaz», «El personal cancela un pedido recibido», «Un pedido en preparación
 -- no se puede cancelar», «Cancelar un pedido que otra tablet acaba de empezar»;
--- [backoffice-access] «El personal intenta modificar la carta fuera de la interfaz».
+-- [backoffice-access] «El personal intenta modificar la carta fuera de la interfaz», «El personal lee las mesas
+-- fuera de la interfaz».
 begin;
-select plan(60);
+select plan(62);
 
 -- Los números y la lista del día dependen de lo que ya haya en la base: se parte de cero
 -- (pedidos de desarrollo o de pruebas a mano; se deshace con el rollback final).
@@ -246,6 +247,27 @@ select ok((select d1.position < d2.position from public.dishes d1, public.dishes
 select ok((select c1.position < c2.position from public.categories c1, public.categories c2
             where c1.id = '00000000-0000-0000-0000-0000000000c1' and c2.id = '00000000-0000-0000-0000-0000000000c2'),
   'move_category no tiene efecto para el personal');
+
+------------------------------------------------------------------------------
+-- [backoffice-access] «El personal lee las mesas fuera de la interfaz» (regularize-spec-drift D-05)
+------------------------------------------------------------------------------
+
+update public.tables set archived_at = now() where id = '00000000-0000-0000-0000-0000000000b2';
+select pg_temp.as_user('a004');
+set local role authenticated;
+select results_eq(
+  $$ select name, archived_at is null, token from public.tables where name like 'Pruebas %' order by name $$,
+  $$ values ('Pruebas Mesa 2'::text, true, '00000000-0000-0000-0000-00000000f001'::uuid),
+            ('Pruebas Terraza 1'::text, false, '00000000-0000-0000-0000-00000000f002'::uuid) $$,
+  '[backoffice-access] «El personal lee las mesas fuera de la interfaz»: nombre, estado y QR de activas y archivadas');
+update public.tables set name = 'Hackeada', archived_at = null
+  where id in ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000b2');
+reset role;
+select results_eq(
+  $$ select name, archived_at is null from public.tables
+     where id in ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000b2') order by name $$,
+  $$ values ('Pruebas Mesa 2'::text, true), ('Pruebas Terraza 1'::text, false) $$,
+  'el personal no puede cambiar ni reactivar las mesas que lee');
 
 select * from finish();
 rollback;

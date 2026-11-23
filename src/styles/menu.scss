@@ -294,6 +294,13 @@
     margin: 0 auto;
     font-weight: 700;
   }
+
+  // Aviso de máximo de líneas (spec table-ordering «Máximo de líneas por pedido»)
+  &__notice {
+    max-width: $content-max-width;
+    margin: 0 auto $space-2;
+    font-weight: 700;
+  }
 }
 
 .size-picker {

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-El acceso a la zona privada de Menu-now (la administración), que exige una sesión iniciada con una cuenta dada de alta para el local. En este cambio la usan los dueños; el personal la reutilizará en cambios posteriores.
+El acceso a la zona privada de Menu-now, que exige una sesión iniciada con una cuenta dada de alta para el local: los dueños usan la administración y el panel de cocina; el personal, solo el panel de cocina.
 
 ## Requirements
 

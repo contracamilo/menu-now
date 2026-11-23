@@ -113,7 +113,7 @@ describe('Avisos del panel de cocina', () => {
     expect(screen.queryByText(/^Pedido nº 4: Recibido/)).not.toBeInTheDocument();
   });
 
-  it('la marca «Nuevo» desaparece al pulsar «Empezar»', async () => {
+  it('[kitchen-panel] «El resaltado desaparece al empezar el pedido»: la marca «Nuevo» se quita al pulsar «Empezar»', async () => {
     await openPanel([]);
     fakeSupabase.rpcs.advance_order = () => new Promise(() => {});
     placeOrder(kitchenOrder({ id: 'o5', number: 5 }));
@@ -122,7 +122,7 @@ describe('Avisos del panel de cocina', () => {
     expect(within(card(5)).queryByText('Nuevo')).not.toBeInTheDocument();
   });
 
-  it('la marca «Nuevo» desaparece a los 2 minutos', async () => {
+  it('[kitchen-panel] «El resaltado desaparece a los 2 minutos»', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     await openPanel([]);
     placeOrder(kitchenOrder({ id: 'o5', number: 5 }));
@@ -148,16 +148,20 @@ describe('Avisos del panel de cocina', () => {
     expect(screen.queryByText(/Sin conexión/)).not.toBeInTheDocument();
   });
 
-  it('con el audio suspendido ofrece activar el aviso sonoro y lo quita al activarlo', async () => {
+  it('[kitchen-panel] «El personal activa el sonido al abrir el panel»: con el audio suspendido ofrece activarlo y lo quita al activarlo', async () => {
     FakeAudioContext.initialState = 'suspended';
     await openPanel([]);
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Activar el aviso sonoro' }));
     expect(screen.queryByRole('button', { name: 'Activar el aviso sonoro' })).not.toBeInTheDocument();
     expect(FakeAudioContext.instances.at(-1)?.state).toBe('running');
+    // y el siguiente pedido nuevo suena
+    placeOrder(kitchenOrder({ id: 'o5', number: 5 }));
+    expect(await screen.findByRole('heading', { name: 'Nº 5' })).toBeInTheDocument();
+    expect(alerts()).toBe(1);
   });
 
-  it('sin Wake Lock ni Web Audio en el navegador el panel funciona sin errores', async () => {
+  it('[kitchen-panel] «Un navegador que no permite mantener la pantalla encendida»: sin Wake Lock ni Web Audio el panel funciona sin errores', async () => {
     vi.stubGlobal('AudioContext', undefined);
     expect('wakeLock' in navigator).toBe(false);
     await openPanel([kitchenOrder({ id: 'o4', number: 4 })]);
@@ -165,7 +169,7 @@ describe('Avisos del panel de cocina', () => {
     expect(await screen.findByRole('heading', { name: 'Nº 5' })).toBeInTheDocument();
   });
 
-  it('con Wake Lock pide mantener la pantalla encendida', async () => {
+  it('[kitchen-panel] «La tablet no se apaga durante el servicio»: con Wake Lock pide mantener la pantalla encendida', async () => {
     const release = vi.fn(() => Promise.resolve());
     const request = vi.fn(() => Promise.resolve({ release }));
     Object.defineProperty(navigator, 'wakeLock', { value: { request }, configurable: true });

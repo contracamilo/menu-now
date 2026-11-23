@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { emptyDraft, orderReducer, orderTotal, unitCount, type DraftOrder, type NewLine, type OrderAction } from './orderReducer';
+import {
+  emptyDraft,
+  MAX_LINES,
+  orderReducer,
+  orderTotal,
+  unitCount,
+  wouldExceedLines,
+  type DraftOrder,
+  type NewLine,
+  type OrderAction,
+} from './orderReducer';
 
 const cana: NewLine = { key: 'k-cana', dish_id: 'd-cana', size_id: 's-cana', dish_name: 'Caña', size_label: null, unit_price_cents: 180 };
 const racion: NewLine = {
@@ -61,6 +71,28 @@ describe('orderReducer', () => {
     expect(orderReducer(state, { type: 'setQuantity', key: 'k-cana', quantity: 21 }).lines[0].quantity).toBe(20);
     const full = orderReducer(state, { type: 'setQuantity', key: 'k-cana', quantity: 20 });
     expect(orderReducer(full, { type: 'add', line: cana })).toBe(full);
+  });
+
+  // 50 líneas distintas: cada una de un plato propio
+  const fiftyLines = () =>
+    Array.from({ length: MAX_LINES }, (_, i): OrderAction => ({
+      type: 'add',
+      line: { ...cana, key: `k-${i}`, dish_id: i === 0 ? cana.dish_id : `d-${i}`, size_id: i === 0 ? cana.size_id : `s-${i}` },
+    }));
+
+  it('[table-ordering] «El comensal llega al máximo de líneas»: no se crea la línea 51', () => {
+    const full = run(...fiftyLines());
+    expect(full.lines).toHaveLength(50);
+    expect(wouldExceedLines(full.lines, racion.dish_id, racion.size_id)).toBe(true);
+    expect(orderReducer(full, { type: 'add', line: racion })).toBe(full);
+  });
+
+  it('[table-ordering] «Sumar unidades a una línea existente con 50 líneas»', () => {
+    const full = run(...fiftyLines());
+    expect(wouldExceedLines(full.lines, cana.dish_id, cana.size_id)).toBe(false);
+    const state = orderReducer(full, { type: 'add', line: cana });
+    expect(state.lines).toHaveLength(50);
+    expect(state.lines[0].quantity).toBe(2);
   });
 
   it('la nota no pasa de 140 caracteres', () => {

@@ -76,12 +76,16 @@ describe('OrderDetailPage', () => {
   });
 
   it.each([
-    ['in_preparation', 'Estado: En preparación', true],
-    ['served', 'Estado: Servido', false],
-  ] as const)('estado %s: muestra «%s»', async (status, text, help) => {
+    ['received', 'Estado: Recibido', 'Hemos recibido tu pedido. Si necesitas algo, pregunta al personal.'],
+    ['in_preparation', 'Estado: En preparación', 'Lo estamos preparando. Si necesitas algo, pregunta al personal.'],
+    ['served', 'Estado: Servido', null],
+  ] as const)('estado %s: muestra «%s» y la ayuda de ese estado', async (status, text, help) => {
     fakeSupabase.rpcs.get_orders = () => ok([{ ...order3, status }]);
     renderDetail(order3.id);
     expect(await screen.findByText(text)).toBeInTheDocument();
-    expect(Boolean(screen.queryByText(/Lo estamos preparando|pregunta al personal/))).toBe(help);
+    if (help) expect(screen.getByText(help)).toBeInTheDocument();
+    else expect(screen.queryByText(/pregunta al personal/)).not.toBeInTheDocument();
+    // «Recibido» no dice que ya se está preparando
+    if (status === 'received') expect(screen.queryByText(/preparando/)).not.toBeInTheDocument();
   });
 });
