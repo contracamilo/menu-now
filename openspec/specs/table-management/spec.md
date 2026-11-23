@@ -84,3 +84,12 @@ Cuando no hay ninguna mesa activa, la pantalla «Mesas» de la administración M
 - **WHEN** abre «Mesas» en la administración
 - **THEN** ve un mensaje que le invita a crear sus mesas para que los comensales puedan pedir
 - **AND** ve la acción para crear una mesa
+
+### Requirement: Longitud máxima del nombre de una mesa
+El sistema MUST rechazar un nombre de mesa de más de 20 caracteres. Mientras el dueño escribe el nombre, la administración MUST mostrar cuántos caracteres lleva de los 20 permitidos y MUST NOT admitir más.
+
+#### Scenario: El dueño escribe un nombre de mesa largo
+- **GIVEN** el dueño está creando una mesa
+- **WHEN** escribe un nombre de 20 caracteres e intenta seguir escribiendo
+- **THEN** el nombre no admite más caracteres
+- **AND** el dueño ve que lleva 20 de los 20 caracteres permitidos
