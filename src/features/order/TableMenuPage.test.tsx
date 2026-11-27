@@ -34,7 +34,7 @@ describe('TableMenuPage', () => {
     // Ningún dato personal: ni sesión ni campos que rellenar
     expect(fakeSupabase.session).toBeNull();
     expect(container.querySelector('input, textarea, select')).toBeNull();
-    expect(screen.queryByText('Para pedir, escanea el código QR de tu mesa.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Para pedir, escanea el código QR de tu mesa o pregunta al personal.')).not.toBeInTheDocument();
     // La mesa se pide con su token
     const tableCall = fakeSupabase.calls.find((c) => c.table === 'rpc/get_table');
     expect(tableCall?.filters).toEqual([['param', 'p_token', TOKEN]]);
@@ -54,7 +54,7 @@ describe('TableMenuPage', () => {
   ])('un token %s abre la carta en modo consulta', async (_label, token, table) => {
     serveTableMenu(table);
     renderTable(token);
-    expect(await screen.findByText('Para pedir, escanea el código QR de tu mesa.')).toBeInTheDocument();
+    expect(await screen.findByText('Para pedir, escanea el código QR de tu mesa o pregunta al personal.')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { level: 2, name: 'Bebidas' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Añadir/ })).not.toBeInTheDocument();
     if (token === 'no-es-un-token') expect(fakeSupabase.calls.some((c) => c.table === 'rpc/get_table')).toBe(false);
@@ -77,10 +77,17 @@ describe('TableMenuPage', () => {
     serveTableMenu();
     renderTable();
     const user = userEvent.setup();
-    expect(screen.queryByRole('link', { name: /^Ver pedido/ })).not.toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Añadir Caña' }));
     expect(plain(orderBar().textContent)).toBe('Ver pedido · 1 · 1,80 €');
     expect(orderBar()).toHaveAttribute('href', `/t/${TOKEN}/order`);
+  });
+
+  it('[table-ordering] «El comensal con el pedido vacío no ve la barra del pedido»', async () => {
+    serveTableMenu();
+    renderTable();
+    await screen.findByRole('button', { name: 'Añadir Caña' });
+    expect(screen.queryByRole('link', { name: /^Ver pedido/ })).not.toBeInTheDocument();
+    expect(document.querySelector('.order-bar')).toBeNull();
   });
 
   it('[table-ordering] «El comensal elige el tamaño de un plato con varios tamaños»', async () => {
@@ -123,6 +130,28 @@ describe('TableMenuPage', () => {
     await user.click(screen.getByRole('button', { name: 'Añadir Caña' }));
     await waitFor(() => expect(plain(screen.getByRole('status').textContent)).toBe('Caña añadido. Total: 3,60 €'));
     expect(plain(orderBar().textContent)).toBe('Ver pedido · 2 · 3,60 €');
+  });
+
+  it('[table-ordering] «El comensal llega al máximo de líneas»: lo ve y se le anuncia, y no se añade la línea', async () => {
+    const lines = Array.from({ length: 50 }, (_, i) => ({
+      key: `k-${i}`,
+      dish_id: `d-${i}`,
+      size_id: `s-${i}`,
+      dish_name: `Plato ${i}`,
+      size_label: null,
+      unit_price_cents: 100,
+      quantity: 1,
+      note: '',
+    }));
+    localStorage.setItem(`menu-now.draft.${TOKEN}`, JSON.stringify({ orderId: null, lines }));
+    serveTableMenu();
+    renderTable();
+    const user = userEvent.setup();
+    const notice = 'Has llegado al máximo de 50 líneas. Confirma este pedido y haz otro para seguir pidiendo.';
+    expect(await screen.findByText(notice)).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Añadir Caña' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(notice));
+    expect(JSON.parse(localStorage.getItem(`menu-now.draft.${TOKEN}`)!).lines).toHaveLength(50);
   });
 
   it('enlaza a «Mis pedidos» de la mesa', async () => {

@@ -29,7 +29,7 @@ describe('parsePriceToCents', () => {
     expect(parsePriceToCents(input)).toEqual({ error: 'error.priceZero' });
   });
 
-  it.each(['-2', '-0,50', 'dos euros', 'abc', '', '2,505', '1.234', '2,', '€2'])('rechaza «%s»', (input) => {
+  it.each(['-2', '-0,50', 'dos euros', 'abc', '', '2,505', '1.234', '2,', '€2', '100000', '100000,00'])('rechaza «%s»', (input) => {
     expect(parsePriceToCents(input)).toEqual({ error: 'error.price' });
   });
 });

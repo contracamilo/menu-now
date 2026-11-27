@@ -185,7 +185,7 @@ describe('CatalogPage', () => {
     expect(fakeSupabase.rpcCalls).toEqual([{ name: 'move_category', args: { p_id: 'desayunos', p_direction: 1 } }]);
   });
 
-  it('archiva y reactiva una categoría; un nombre ya usado al reactivar muestra el error', async () => {
+  it('archiva y reactiva una categoría; [catalog-management] «El dueño intenta reactivar una categoría con nombre repetido»: muestra el error', async () => {
     installCatalog([
       adminCategory({
         id: 'tapas',

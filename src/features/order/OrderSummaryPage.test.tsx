@@ -270,4 +270,12 @@ describe('OrderSummaryPage', () => {
     ).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Confirmar pedido' })).not.toBeInTheDocument());
   });
+  it('[table-ordering] «El comensal pide a pleno sol»: todos los controles del resumen tienen área táctil', async () => {
+    // El contraste de 7:1 lo garantizan los tokens compartidos con la carta (src/styles/contrast.test.ts)
+    setup([cana(), racion]);
+    await screen.findByRole('button', { name: 'Confirmar pedido' });
+    const controls = [...screen.getAllByRole('button'), ...screen.getAllByRole('link')];
+    expect(controls.length).toBeGreaterThan(0);
+    for (const control of controls) expect(control).toHaveClass('tap-target');
+  });
 });

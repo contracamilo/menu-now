@@ -238,8 +238,26 @@ describe('DishForm', () => {
     setup('/admin/dishes/new?category=bocadillos');
     await fillBasics(user, { name: 'Raro', price: '2,505', allergens: ['Gluten'] });
     await save(user);
-    expect(await screen.findByText('El precio debe ser mayor que cero, con como máximo dos decimales.')).toBeInTheDocument();
+    expect(await screen.findByText('El precio debe ser mayor que cero y como máximo 99 999,99 €, con dos decimales como mucho.')).toBeInTheDocument();
     expect(saves()).toHaveLength(0);
+  });
+
+  it('[catalog-management] «El dueño escribe un precio demasiado alto»: 100000 no se guarda', async () => {
+    const user = userEvent.setup();
+    setup('/admin/dishes/new?category=bocadillos');
+    await fillBasics(user, { name: 'Caña', price: '100000', allergens: ['Gluten'] });
+    await save(user);
+    expect(await screen.findByText('El precio debe ser mayor que cero y como máximo 99 999,99 €, con dos decimales como mucho.')).toBeInTheDocument();
+    expect(saves()).toHaveLength(0);
+  });
+
+  it('[catalog-management] «El dueño escribe una descripción larga»: no admite más de 160 caracteres', async () => {
+    const user = userEvent.setup();
+    setup('/admin/dishes/new?category=bocadillos');
+    const description = await screen.findByLabelText('Descripción corta (opcional)');
+    await user.type(description, 'a'.repeat(165));
+    expect(description).toHaveValue('a'.repeat(160));
+    expect(screen.getByText('160/160')).toBeInTheDocument();
   });
 
   it('[catalog-management] «El dueño crea un plato incluido»', async () => {

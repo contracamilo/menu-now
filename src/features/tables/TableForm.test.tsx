@@ -65,6 +65,15 @@ describe('TableForm', () => {
     await waitFor(() => expect(writes().map((c) => c.payload)).toEqual([{ name: 'barra' }]));
   });
 
+  it('[table-management] «El dueño escribe un nombre de mesa largo»: no admite más de 20 caracteres', async () => {
+    setup();
+    const user = userEvent.setup();
+    const input = await screen.findByLabelText(/Nombre de la mesa/);
+    await user.type(input, 'm'.repeat(25));
+    expect(input).toHaveValue('m'.repeat(20));
+    expect(screen.getByText('20/20')).toBeInTheDocument();
+  });
+
   it('renombra una mesa sin tocar su token', async () => {
     const state = setup('/admin/tables/m4');
     await waitFor(() => expect(screen.getByLabelText(/Nombre de la mesa/)).toHaveValue('Mesa 4'));

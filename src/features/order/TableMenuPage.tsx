@@ -4,7 +4,7 @@ import { formatPrice } from '../../lib/money';
 import { MenuPage } from '../menu/MenuPage';
 import { AddToOrder } from './AddToOrder';
 import { useOrder } from './OrderProvider';
-import { orderTotal, unitCount } from './orderReducer';
+import { MAX_LINES, orderTotal, unitCount } from './orderReducer';
 import { useTable } from './useTable';
 
 /** Región viva que anuncia los cambios del pedido (spec «Accesibilidad del pedido»). */
@@ -24,6 +24,7 @@ function OrderBar() {
   if (draft.lines.length === 0) return null;
   return (
     <div className="order-bar">
+      {draft.lines.length >= MAX_LINES && <p className="order-bar__notice">{t('order.maxLines')}</p>}
       <Link className="button tap-target button--primary order-bar__link" to={`/t/${token}/order`}>
         {t('order.bar', { count: unitCount(draft.lines), total: formatPrice(orderTotal(draft.lines), lang) })}
       </Link>

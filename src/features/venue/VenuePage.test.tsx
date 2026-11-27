@@ -31,6 +31,16 @@ describe('VenuePage («Mi local»)', () => {
     expect(updates()[0].payload).toEqual({ name: 'Bar Manolo', logo_path: upload?.path });
   });
 
+  it('[venue-settings] «El dueño escribe un nombre de local largo»: no admite más de 60 caracteres', async () => {
+    venue(null, null);
+    const user = userEvent.setup();
+    renderWithProviders(<VenuePage />, { zone: 'admin' });
+    const input = await screen.findByLabelText('Nombre del local');
+    await user.type(input, 'b'.repeat(65));
+    expect(input).toHaveValue('b'.repeat(60));
+    expect(screen.getByText('60/60')).toBeInTheDocument();
+  });
+
   it('[venue-settings] «El dueño intenta guardar sin nombre»', async () => {
     venue(null, null);
     const user = userEvent.setup();

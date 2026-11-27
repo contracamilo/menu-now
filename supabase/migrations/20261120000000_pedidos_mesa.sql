@@ -1,5 +1,5 @@
 -- add-pedidos-mesa: mesas con QR, pedidos anónimos desde la mesa y su consulta.
--- Ver openspec/changes/add-pedidos-mesa/design.md (D2–D5).
+-- Ver openspec/changes/archive/2026-11-19-add-pedidos-mesa/design.md (D2–D5).
 
 ------------------------------------------------------------------------------
 -- D2. Modelo de datos
